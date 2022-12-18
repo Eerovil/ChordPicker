@@ -44,11 +44,11 @@ export const chordChoiceToDivisionedNotes = (chordChoice: ChordChoice, division:
     divisionedNotes[division] = divisionedNotes[division] || [];
     divisionedNotes[division].push({
         note: bassNote,
-        duration: BEAT_LENGTH * 2,
+        duration: BEAT_LENGTH,
         partIndex: 3,
         chord: chord,
-        scale: new Scale('Cmaj'),
-        originalScale: new Scale('Cmaj'),
+        scale: (window as any).CMAJ,
+        originalScale: (window as any).CMAJ,
         tension: 0,
     })
 
@@ -93,24 +93,38 @@ export const chordChoiceToDivisionedNotes = (chordChoice: ChordChoice, division:
         if (!part2Note) {
             debugger;
         }
-        
-        while (globalSemitone(part1Note) < globalSemitone(bassNote)) {
-            part1Note.octave += 1;
-        }
-        if (globalSemitone(part1Note) > semitoneLimits[1][1]) {
-            score -= 100;
-        }
-        if (prevPart1Note) {
-            score -= Math.abs(globalSemitone(part1Note) - globalSemitone(prevPart1Note.note))
-        } 
-        while (globalSemitone(part2Note) < globalSemitone(part1Note)) {
+        let iterations = 0;
+        while (globalSemitone(part2Note) < globalSemitone(bassNote) || globalSemitone(part2Note) < semitoneLimits[2][0]) {
+            iterations += 1;
+            if (iterations > 100) {
+                debugger;
+                return;
+            }
             part2Note.octave += 1;
         }
         if (globalSemitone(part2Note) > semitoneLimits[2][1]) {
             score -= 100;
         }
         if (prevPart2Note) {
-            score -= Math.abs(globalSemitone(part1Note) - globalSemitone(prevPart2Note.note))
+            score -= Math.abs(globalSemitone(part2Note) - globalSemitone(prevPart2Note.note))
+        }
+        iterations = 0;
+        while (globalSemitone(part1Note) < globalSemitone(part2Note) || globalSemitone(part1Note) < semitoneLimits[1][0]) {
+            iterations += 1;
+            if (iterations > 100) {
+                debugger;
+                return;
+            }
+            part1Note.octave += 1;
+        }
+        if (globalSemitone(part1Note) > semitoneLimits[1][1]) {
+            score -= 100;
+        }
+        if (melodyNote && globalSemitone(part1Note) > globalSemitone(melodyNote.note)) {
+            score -= 100;
+        }
+        if (prevPart1Note) {
+            score -= Math.abs(globalSemitone(part1Note) - globalSemitone(prevPart1Note.note))
         }
         if (bestPermutation == null || score > bestPermutationScore) {
             bestPermutation = i;
@@ -133,29 +147,29 @@ export const chordChoiceToDivisionedNotes = (chordChoice: ChordChoice, division:
         debugger;
     }
     
-    while (globalSemitone(part1Note) < globalSemitone(bassNote)) {
-        part1Note.octave += 1;
-    }
-    while (globalSemitone(part2Note) < globalSemitone(part1Note)) {
+    while (globalSemitone(part2Note) < globalSemitone(bassNote) || globalSemitone(part2Note) < semitoneLimits[2][0]) {
         part2Note.octave += 1;
+    }
+    while (globalSemitone(part1Note) < globalSemitone(part2Note) || globalSemitone(part1Note) < semitoneLimits[1][0]) {
+        part1Note.octave += 1;
     }
 
     divisionedNotes[division].push({
         note: part1Note,
-        duration: BEAT_LENGTH * 2,
+        duration: BEAT_LENGTH,
         partIndex: 1,
         chord: chord,
-        scale: new Scale('Cmaj'),
-        originalScale: new Scale('Cmaj'),
+        scale: (window as any).CMAJ,
+        originalScale: (window as any).CMAJ,
         tension: 0,
     })
     divisionedNotes[division].push({
         note: part2Note,
-        duration: BEAT_LENGTH * 2,
+        duration: BEAT_LENGTH,
         partIndex: 2,
         chord: chord,
-        scale: new Scale('Cmaj'),
-        originalScale: new Scale('Cmaj'),
+        scale: (window as any).CMAJ,
+        originalScale: (window as any).CMAJ,
         tension: 0,
     })
 }

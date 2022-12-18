@@ -1,6 +1,6 @@
 import { Note } from "musictheoryjs";
 import { MainMusicParams } from "./params";
-import { Chord, DivisionedRichnotes, globalSemitone, Melody, MelodyNote } from "./utils";
+import { Chord, DivisionedRichnotes, globalSemitone, Melody, MelodyNote, startingNotes } from "./utils";
 import { BEAT_LENGTH } from "./utils";
 
 export const melodyToRichNotes = (melody: Melody, disivionedRichNotes: DivisionedRichnotes, params: MainMusicParams) => {
@@ -26,6 +26,7 @@ export const melodyToRichNotes = (melody: Melody, disivionedRichNotes: Divisione
         }
         return ret;
     }
+    const { startingGlobalSemitones, semitoneLimits } = startingNotes(params);
     const getNote = (note: MelodyNote, prevGTone: number | null) => {
         let noteName = note.note;
         if (note.sharp == -1) {
@@ -35,8 +36,8 @@ export const melodyToRichNotes = (melody: Melody, disivionedRichNotes: Divisione
             noteName += '#';
         }
         const newNote = new Note(noteName);
+        let newGTone = globalSemitone(newNote);
         if (prevGTone && note.direction != 0) {
-            let newGTone = globalSemitone(newNote);
             if (note.direction == 1) {
                 while (newGTone <= prevGTone) {
                     newGTone += 12;
@@ -50,6 +51,14 @@ export const melodyToRichNotes = (melody: Melody, disivionedRichNotes: Divisione
                 }
             }
         }
+        while (newGTone < semitoneLimits[0][0]) {
+            newGTone += 12;
+            newNote.octave += 1;
+        }
+        while (newGTone > semitoneLimits[0][1]) {
+            newGTone -= 12;
+            newNote.octave -= 1;
+        }
         return newNote;
     }
     const scale = params.getScale();
@@ -59,7 +68,7 @@ export const melodyToRichNotes = (melody: Melody, disivionedRichNotes: Divisione
 
     for (const melodyNote of melody) {
         const duration = getDuration(melodyNote);
-        const note = getNote(melodyNote, prevGTone);
+        const note = getNote(melodyNote, prevGTone || startingGlobalSemitones[0]);
         prevGTone = globalSemitone(note);
         disivionedRichNotes[currentDivision] = disivionedRichNotes[currentDivision] || [];
         disivionedRichNotes[currentDivision].push({

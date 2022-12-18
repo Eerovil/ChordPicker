@@ -55,10 +55,13 @@
           <div v-if="chords[chordSlot]">
             <div v-if="editingChord == chordSlot" class="editing-chord">
               <select v-model="selectedChordRoot">
-                <option v-for="root in chordRootChoices" :value="root">{{ root }}</option>
+                <option v-for="root in chordRootChoices" :value="root">{{ noteNames[root] }}</option>
               </select>
               <select v-if="selectedChordRoot != null" v-model="selectedChord">
                 <option v-for="chord in chordInversionsAndDoublings[selectedChordRoot]" :value="chord">{{ chord.chord.chordType }} {{ chord.inversion }} {{ chord.doubling }}</option>
+              </select>
+              <select v-model="selectedChord">
+                <option v-for="chord in chordChoicesByTotalScore" :value="chord">{{ chord.chord.toString() }} {{ chord.inversion }} {{ chord.doubling }}</option>
               </select>
               <button @click="saveChord()">OK</button>
             </div>
@@ -102,6 +105,9 @@ createApp({
     this.params = new window.MainMusicParams();
   },
   computed: {
+    noteNames() {
+      return ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+    },
     maxDivision() {
       return this.melody.length * 12 + 24 * 12;
     },
@@ -135,6 +141,11 @@ createApp({
         ret[rootName].push(chord);
       }
       return ret;
+    },
+    chordChoicesByTotalScore() {
+      return this.chordChoices.sort((a, b) => {
+        return a.totalScore - b.totalScore;
+      });
     }
   },
   methods: {
@@ -146,19 +157,20 @@ createApp({
         'dotted': false,
       }
     },
-    initChord() {
+    initChord(index) {
       return {
         'name': '',
         'numeral': '',
         'inversion': '',
         'doubling': '',
+        'division': index,
       }
     },
     refreshXML() {
       window.loadMelody(this.melody, this.chords, this.params)
     },
     addChordToIndex(index) {
-      this.chords[index] = this.initChord();
+      this.chords[index] = this.initChord(index);
       this.startEditingChord(index);
     },
     async startEditingChord(index) {
@@ -175,10 +187,11 @@ createApp({
         tmpIndex++;
       }
       this.editingChord = index;
-      this.chordChoices = await window.getChordChoices(prevChord, nextChord, this.params);
+      this.chordChoices = await window.getChordChoices(this.melody, index, prevChord, nextChord, this.params);
     },
     saveChord() {
       this.chords[this.editingChord] = this.selectedChord;
+      this.chords[this.editingChord].division = this.editingChord;
       this.editingChord = -1;
       this.refreshXML();
     },

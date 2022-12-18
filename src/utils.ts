@@ -341,6 +341,7 @@ export type ChordProblem = {
     voiceDistance: number,
     chordProgression: number,
     dissonance: number,
+    melody: number,
 }
 
 
@@ -349,11 +350,31 @@ export type ChordChoice = {
     numeral: string,
     inversion: number,
     doubling: Array<number>,
-    problem?: ChordProblem,
+    prevProblem?: ChordProblem,
+    nextProblem?: ChordProblem,
+    selfProblem?: ChordProblem,
+    totalScore?: number,
     chord?: Chord,
     notes?: Array<Note>,
+    division?: number,
 }
 
 export type ChordChoicesByDivision = {
     [key: number]: ChordChoice,
+}
+
+export const totalChordScore = (chordChoice: ChordChoice, params: MainMusicParams) => {
+    const { prevProblem, nextProblem, selfProblem } = chordChoice;
+    chordChoice.totalScore = 0;
+    if (prevProblem) {
+        chordChoice.totalScore += prevProblem.voiceDistance;
+    }
+    if (nextProblem) {
+        chordChoice.totalScore += nextProblem.voiceDistance;
+    }
+    if (selfProblem) {
+        chordChoice.totalScore += selfProblem.dissonance;
+        chordChoice.totalScore += selfProblem.melody;
+    }
+    return chordChoice.totalScore;
 }

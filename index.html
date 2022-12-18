@@ -14,7 +14,22 @@
 
 <body>
     <div id="vue-template">
+      <input type="text" v-model="melodyText"></input>
+      <div v-for="note in melody">
+        <p>{{ note.note }}<span v-if="note.sharp == -1">b</span><span v-if="note.sharp == 1">#</span></p>
+        <input type="number" min="-1" max="1" v-model="note.sharp"></input>
+        <select v-model="note.length">
+          <option value="w">Whole</option>
+          <option value="h">Half</option>
+          <option value="q">Quarter</option>
+          <option value="e">Eighth</option>
+          <option value="s">Sixteenth</option>
+        </select>
+        <input type="checkbox" v-model="note.dotted"></input>
+      </div>
+      <div id="score">
 
+      </div>
     </div>
 </body>
 <script>
@@ -26,17 +41,54 @@ const { createApp } = Vue
 createApp({
   data() {
     return {
-
+      melodyText: "",
+      melody: [],
+      params: {},
     }
   },
   mounted() {
-
+    this.params = new window.MainMusicParams();
   },
   methods: {
-
+    initMelodyNote(noteName) {
+      return {
+        'note': noteName,  // Can be a space or CDEFGAH
+        'sharp': 0,
+        'duration': 'q',
+        'dotted': false,
+      }
+    },
+    refreshXML() {
+      window.loadMelody(this.melody, this.params)
+    }
   },
   watch: {
-
+    melodyText(newValue) {
+      const newNotes = newValue.split("")
+      if (this.melody.length < newNotes.length) {
+        for (let i = 0; i < newNotes.length - this.melody.length; i++) {
+          this.melody.push(this.initMelodyNote(newNotes[newNotes.length - 1 - i]))
+        }
+      }
+      else if (this.melody.length > newNotes.length) {
+        for (let i = 0; i < this.melody.length - newNotes.length; i++) {
+          this.melody.pop()
+        }
+      }
+      // Check that noteName matches for each note
+      for (let i = 0; i < newNotes.length; i++) {
+        if (this.melody[i].note != newNotes[i]) {
+          this.melody[i].note = newNotes[i]
+          this.melody[i].sharp = 0
+        }
+      }
+    },
+    melody: {
+      handler() {
+        this.refreshXML();
+      },
+      deep: true,
+    }
   }
 
 }).mount('#vue-template')

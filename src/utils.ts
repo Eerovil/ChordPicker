@@ -1,7 +1,7 @@
 import { Note, Scale, Semitone } from "musictheoryjs";
-import { Logger } from "./mylogger";
-import { MainMusicParams, MusicParams } from "./params";
-import { Tension } from "./tension";
+
+import { MainMusicParams } from "./params";
+
 
 export const BEAT_LENGTH = 12;
 
@@ -78,7 +78,7 @@ export const nextGToneInScale = (gTone: Semitone, indexDiff: number, scale: Scal
 }
 
 
-export const startingNotes = (params: MusicParams) => {
+export const startingNotes = (params: MainMusicParams) => {
     const p1Note = params.parts[0].note || "F4";
     const p2Note = params.parts[1].note || "C4";
     const p3Note = params.parts[2].note || "A3";
@@ -216,7 +216,7 @@ export type RichNote = {
     originalScale: Scale,
     beam?: string,
     tie?: string,
-    tension: Tension,
+    tension: number,
     inversionName?: string,
 }
 
@@ -326,64 +326,11 @@ export const getRichNote = (divisionedNotes: DivisionedRichnotes, division: numb
     }
     return null;
 }
-
-
-export function getRhythmNeededDurations(mainParams: MainMusicParams) {
-    const melodyRhythmString = mainParams.melodyRhythm;
-    // Figure out what needs to happen each beat to get our melody
-    let rhythmDivision = 0;
-    const rhythmNeededDurations: { [key: number]: number; } = {};
-    for (let i = 0; i < melodyRhythmString.length; i++) {
-        const rhythm = melodyRhythmString[i];
-        if (rhythm == "W") {
-            rhythmNeededDurations[rhythmDivision] = BEAT_LENGTH * 4;
-            rhythmDivision += BEAT_LENGTH * 4;
-            // TODO
-        } else if (rhythm == "H") {
-            rhythmNeededDurations[rhythmDivision] = BEAT_LENGTH * 2;
-            rhythmDivision += BEAT_LENGTH * 2;
-            // TODO
-        } else if (rhythm == "Q") {
-            rhythmNeededDurations[rhythmDivision] = BEAT_LENGTH;
-            rhythmDivision += BEAT_LENGTH;
-            continue; // Nothing to do
-        } else if (rhythm == "E") {
-            // This division needs to be converted to Eighth
-            rhythmNeededDurations[rhythmDivision] = BEAT_LENGTH / 2;
-            rhythmDivision += BEAT_LENGTH / 2;
-        } else if (rhythm == "S") {
-            // This division needs to be converted to Sixteenth
-            rhythmNeededDurations[rhythmDivision] = BEAT_LENGTH / 4;
-            rhythmDivision += BEAT_LENGTH / 4;
-        }
-    }
-    return rhythmNeededDurations;
-}
-
-
-export type MelodyNeededTone = {
-    [key: number]: {
-        tone: number,
-        duration: number,
-    }
-}
-
-
-
-export function getMelodyNeededTones(mainParams: MainMusicParams): MelodyNeededTone {
-    const rhythmNeededDurations = getRhythmNeededDurations(mainParams);
-    const forcedMelodyArray = mainParams.forcedMelody || "";
-    const ret: MelodyNeededTone = {};
-    // Figure out what needs to happen each beat to get our melody
-    let counter = -1;
-    for (const division in rhythmNeededDurations) {
-        counter++;
-        const divisionNum = parseInt(division);
-        ret[divisionNum] = {
-            "duration": rhythmNeededDurations[divisionNum],
-            "tone": forcedMelodyArray[counter],
-        }
-    }
-    return ret;
-}
-
+export type MelodyNote = {
+    note: string,
+    duration: string,
+    dotted: boolean,
+    sharp: number,
+    direction: number,
+};
+export type Melody = Array<MelodyNote>;

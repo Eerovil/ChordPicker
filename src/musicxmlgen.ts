@@ -156,7 +156,7 @@ function addRichNoteToMeasure(richNote: RichNote, measure: builder.XMLElement, s
     }
   }
 
-  let lyric = richNote.tension && staff == 0 ? { 'text': { '#text': richNote.tension.totalTension.toFixed(2) } } : undefined
+  let lyric = richNote.tension && staff == 0 ? { 'text': { '#text': `${richNote.tension}` } } : undefined
 
   if (richNote.scale && richNote.chord && staff == 1) {
     const roman = richNote.scale.notes.map(n => n.semitone).indexOf(richNote.chord.notes[0].semitone);

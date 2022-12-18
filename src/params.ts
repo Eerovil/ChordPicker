@@ -1,3 +1,4 @@
+import { Scale } from "musictheoryjs";
 
 export class MainMusicParams {
     beatsPerBar: number = 4;
@@ -29,4 +30,8 @@ export class MainMusicParams {
                 volume: 10,
             }
         ];
+
+    getScale(): Scale {
+        return new Scale('Cmaj');
+    }
 }

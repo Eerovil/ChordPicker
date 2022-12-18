@@ -1,0 +1,8 @@
+{
+    "html.autoClosingTags": false,
+    "html.autoCreateQuotes": false,
+    "search.exclude": {
+        "**/dist": true,
+        "dist": true
+    }
+}

@@ -2,7 +2,7 @@ import { Scale } from "musictheoryjs";
 
 export class MainMusicParams {
     beatsPerBar: number = 4;
-    tempo: number = 30;
+    tempo: number = 70;
 
     parts: Array<{
         voice: string,

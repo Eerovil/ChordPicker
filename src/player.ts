@@ -22,6 +22,17 @@ export const renderMusic = async (scoreXml: string) => {
   const osmd = (window as any).renderOSMD
   await osmd.load(scoreXml);
   osmd.render();
+  registedInitButton();
+}
+
+
+const registedInitButton = () => {
+  let el = document.getElementById("btn-play");
+  if (el) {
+    el.addEventListener("click", () => {
+        loadPlayer((window as any).scoreXML, true);
+    });
+  }
 }
 
 
@@ -30,20 +41,18 @@ const loadPlayer = async (scoreXml: string, autoplay: boolean) => {
   if (!document) {
     return;
   }
-  let el = document.getElementById("score-hidden");
+  let el = document.getElementById("score");
   if (!el) {
     return;
   }
   el.innerHTML = "";
-  if (!(window as any).playerOSMD) {
-    (window as any).playerOSMD = new OpenSheetMusicDisplay(el);
+  if (!(window as any).renderOSMD) {
+    (window as any).renderOSMD = new OpenSheetMusicDisplay(el);
   }
-  const osmd = (window as any).playerOSMD
-  if ((window as any).audioPlayer) {
-    (window as any).audioPlayer.stop();
-    delete (window as any).audioPlayer;
+  const osmd = (window as any).renderOSMD
+  if (!(window as any).audioPlayer) {
+    (window as any).audioPlayer = new AudioPlayer();
   }
-  (window as any).audioPlayer = new AudioPlayer();
   const audioPlayer = (window as any).audioPlayer;
   audioPlayer.playbackSettings.masterVolume = 40;
 
@@ -66,15 +75,7 @@ function registerButtonEvents(audioPlayer: AudioPlayer) {
   if (!document) {
     return;
   }
-  let el = document.getElementById("btn-play");
-  if (el) {
-    el.addEventListener("click", () => {
-      if (audioPlayer.state === "STOPPED" || audioPlayer.state === "PAUSED") {
-        audioPlayer.play();
-      }
-    });
-  }
-  el = document.getElementById("btn-pause");
+  let el = document.getElementById("btn-pause");
   if (el) {
     el.addEventListener("click", () => {
       if (audioPlayer.state === "PLAYING") {

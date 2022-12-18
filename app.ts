@@ -1,8 +1,11 @@
+import { buildTables } from "musictheoryjs";
 import { melodyToRichNotes } from "./src/melodytorichnotes";
 import { toXml } from "./src/musicxmlgen";
 import { MainMusicParams } from "./src/params";
 import { loadPlayer, renderMusic } from "./src/player"
 import { DivisionedRichnotes, Melody } from "./src/utils"
+
+buildTables();
 
 (window as any).MainMusicParams = MainMusicParams;
 

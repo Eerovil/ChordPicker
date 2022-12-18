@@ -334,3 +334,26 @@ export type MelodyNote = {
     direction: number,
 };
 export type Melody = Array<MelodyNote>;
+
+
+export type ChordProblem = {
+    parallelFifths: number,
+    voiceDistance: number,
+    chordProgression: number,
+    dissonance: number,
+}
+
+
+export type ChordChoice = {
+    name: string,
+    numeral: string,
+    inversion: number,
+    doubling: Array<number>,
+    problem?: ChordProblem,
+    chord?: Chord,
+    notes?: Array<Note>,
+}
+
+export type ChordChoicesByDivision = {
+    [key: number]: ChordChoice,
+}

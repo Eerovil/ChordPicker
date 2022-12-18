@@ -18,6 +18,15 @@
         margin: 1px;
         width: 2rem;
       }
+      #chords {
+        display: flex;
+      }
+      .chord {
+        display: flex;
+        flex-direction: column;
+        margin: 1px;
+        width: 2rem;
+      }
     </style>
 </head>
 
@@ -41,6 +50,30 @@
       <div id="score">
 
       </div>
+      <div id="chords">
+        <div v-for="chordSlot in chordSlots">
+          <div v-if="chords[chordSlot]">
+            <div v-if="editingChord == chordSlot" class="editing-chord">
+              <select v-model="selectedChordRoot">
+                <option v-for="root in chordRootChoices" :value="root">{{ root }}</option>
+              </select>
+              <select v-if="selectedChordRoot != null" v-model="selectedChord">
+                <option v-for="chord in chordInversionsAndDoublings[selectedChordRoot]" :value="chord">{{ chord.chord.chordType }} {{ chord.inversion }} {{ chord.doubling }}</option>
+              </select>
+              <button @click="saveChord()">OK</button>
+            </div>
+            <div v-else class="chord">
+              <p>{{ chords[chordSlot].name }}</p>
+              <p>{{ chords[chordSlot].numeral }}</p>
+              <p>{{ chords[chordSlot].inversion }}</p>
+              <button @click="startEditingChord(chordSlot)">E</button>
+            </div>
+          </div>
+          <div v-else>
+            <button @click="addChordToIndex(chordSlot)">+</button>
+          </div>
+        </div>
+      </div>
       <button id="btn-play">PLAY</button>
       <button id="btn-pause">PAUSE</button>
       <button id="btn-stop">STOP</button>
@@ -58,10 +91,51 @@ createApp({
       melodyText: "",
       melody: [],
       params: {},
+      chords: {},
+      editingChord: -1,
+      chordChoices: [],
+      selectedChordRoot: null,
+      selectedChord: null,
     }
   },
   mounted() {
     this.params = new window.MainMusicParams();
+  },
+  computed: {
+    maxDivision() {
+      return this.melody.length * 12 + 24 * 12;
+    },
+    chordSlots() {
+      ret = [];
+      for (let i = 0; i < this.maxDivision; i += 12) {
+        ret.push(i);
+      }
+      return ret;
+    },
+    chordToEdit() {
+      return this.chords[this.editingChord];
+    },
+    chordRootChoices() {
+      let ret = new Set();
+      for (let i = 0; i < this.chordChoices.length; i++) {
+        const chord = this.chordChoices[i];
+        const rootName = chord.chord.notes[0].semitone;
+        ret.add(rootName);
+      }
+      return Array.from(ret);
+    },
+    chordInversionsAndDoublings() {
+      const ret = {};
+      for (let i = 0; i < this.chordChoices.length; i++) {
+        const chord = this.chordChoices[i];
+        const rootName = chord.chord.notes[0].semitone;
+        if (!ret[rootName]) {
+          ret[rootName] = [];
+        }
+        ret[rootName].push(chord);
+      }
+      return ret;
+    }
   },
   methods: {
     initMelodyNote(noteName) {
@@ -72,9 +146,42 @@ createApp({
         'dotted': false,
       }
     },
+    initChord() {
+      return {
+        'name': '',
+        'numeral': '',
+        'inversion': '',
+        'doubling': '',
+      }
+    },
     refreshXML() {
-      window.loadMelody(this.melody, this.params)
-    }
+      window.loadMelody(this.melody, this.chords, this.params)
+    },
+    addChordToIndex(index) {
+      this.chords[index] = this.initChord();
+      this.startEditingChord(index);
+    },
+    async startEditingChord(index) {
+      let tmpIndex = index - 1;
+      let prevChord = this.chords[tmpIndex];
+      while (!prevChord && tmpIndex >= 0) {
+        prevChord = this.chords[tmpIndex];
+        tmpIndex--;
+      }
+      tmpIndex = index + 1;
+      let nextChord = this.chords[tmpIndex];
+      while (!nextChord && tmpIndex <= this.chordSlots[this.chordSlots.length - 1]) {
+        nextChord = this.chords[tmpIndex];
+        tmpIndex++;
+      }
+      this.editingChord = index;
+      this.chordChoices = await window.getChordChoices(prevChord, nextChord, this.params);
+    },
+    saveChord() {
+      this.chords[this.editingChord] = this.selectedChord;
+      this.editingChord = -1;
+      this.refreshXML();
+    },
   },
   watch: {
     melodyText(newValue) {

@@ -18,6 +18,10 @@ export const renderMusic = async (scoreXml: string) => {
   el.innerHTML = "";
   if (!(window as any).renderOSMD) {
     (window as any).renderOSMD = new OpenSheetMusicDisplay(el);
+    (window as any).renderOSMD.setOptions({
+        backend: "svg",
+        drawingParameters: "compacttight"
+    })
   }
   const osmd = (window as any).renderOSMD
   await osmd.load(scoreXml);
@@ -46,9 +50,6 @@ const loadPlayer = async (scoreXml: string, autoplay: boolean) => {
     return;
   }
   el.innerHTML = "";
-  if (!(window as any).renderOSMD) {
-    (window as any).renderOSMD = new OpenSheetMusicDisplay(el);
-  }
   const osmd = (window as any).renderOSMD
   if (!(window as any).audioPlayer) {
     (window as any).audioPlayer = new AudioPlayer();

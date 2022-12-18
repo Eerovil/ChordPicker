@@ -9,23 +9,34 @@
     <script src="dist/bundle.js"></script>
     <script src="midi.js"></script>
     <style>
+      #melodys {
+        display: flex;
+      }
+      #melodys > div {
+        display: flex;
+        flex-direction: column;
+        margin: 1px;
+        width: 2rem;
+      }
     </style>
 </head>
 
 <body>
     <div id="vue-template">
       <input type="text" v-model="melodyText"></input>
-      <div v-for="note in melody">
-        <p>{{ note.note }}<span v-if="note.sharp == -1">b</span><span v-if="note.sharp == 1">#</span></p>
-        <input type="number" min="-1" max="1" v-model="note.sharp"></input>
-        <select v-model="note.length">
-          <option value="w">Whole</option>
-          <option value="h">Half</option>
-          <option value="q">Quarter</option>
-          <option value="e">Eighth</option>
-          <option value="s">Sixteenth</option>
-        </select>
-        <input type="checkbox" v-model="note.dotted"></input>
+      <div id="melodys">
+        <div v-for="note in melody">
+          <p>{{ note.note }}<span v-if="note.sharp == -1">b</span><span v-if="note.sharp == 1">#</span></p>
+          <input type="number" min="-1" max="1" v-model="note.sharp"></input>
+          <select v-model="note.duration">
+            <option value="w">Whole</option>
+            <option value="h">Half</option>
+            <option value="q">Quarter</option>
+            <option value="e">Eighth</option>
+            <option value="s">Sixteenth</option>
+          </select>
+          <input type="checkbox" v-model="note.dotted"></input>
+        </div>
       </div>
       <div id="score">
 
@@ -66,13 +77,19 @@ createApp({
     melodyText(newValue) {
       const newNotes = newValue.split("")
       if (this.melody.length < newNotes.length) {
-        for (let i = 0; i < newNotes.length - this.melody.length; i++) {
-          this.melody.push(this.initMelodyNote(newNotes[newNotes.length - 1 - i]))
+        // Maybe new note is inserted in between
+        for (let i = 0; i < newNotes.length; i++) {
+          if (!this.melody[i] || this.melody[i].note != newNotes[i]) {
+            this.melody.splice(i, 0, this.initMelodyNote(newNotes[i]))
+          }
         }
       }
       else if (this.melody.length > newNotes.length) {
-        for (let i = 0; i < this.melody.length - newNotes.length; i++) {
-          this.melody.pop()
+        // Maybe a note is deleted from the middle
+        for (let i = 0; i < newNotes.length; i++) {
+          if (this.melody[i].note != newNotes[i]) {
+            this.melody.splice(i, 1)
+          }
         }
       }
       // Check that noteName matches for each note

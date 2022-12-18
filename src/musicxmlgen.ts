@@ -78,24 +78,41 @@ function semitoneToPitch(semitone: number, scale: Scale, direction: string = "sh
 function richNoteDuration(richNote: RichNote) {
   const duration = richNote.duration;
   let type: string = 'quarter';
-  if (duration === BEAT_LENGTH * 4) {
+  let dotted = false;
+  if (duration >= BEAT_LENGTH * 4) {
     type = 'whole';
+    if (duration > BEAT_LENGTH * 4) {
+      dotted = true;
+    }
   }
-  else if (duration === BEAT_LENGTH * 2) {
+  else if (duration >= BEAT_LENGTH * 2) {
     type = 'half';
+    if (duration > BEAT_LENGTH * 2) {
+        dotted = true;
+    }
   }
-  else if (duration === BEAT_LENGTH) {
+  else if (duration >= BEAT_LENGTH) {
     type = 'quarter';
+    if (duration > BEAT_LENGTH) {
+        dotted = true;
+    }
   }
-  else if (duration == BEAT_LENGTH / 2) {
+  else if (duration >= BEAT_LENGTH / 2) {
     type = 'eighth';
+    if (duration > BEAT_LENGTH / 2) {
+        dotted = true;
+    }
   }
-  else if (duration == BEAT_LENGTH / 4) {
+  else if (duration >= BEAT_LENGTH / 4) {
     type = '16th';
+    if (duration > BEAT_LENGTH / 4) {
+        dotted = true;
+    }
   }
 
   return {
     'duration': duration,
+    'dotted': dotted,
     'type': type,
   }
 }
@@ -216,6 +233,7 @@ function addRichNoteToMeasure(richNote: RichNote, measure: builder.XMLElement, s
     'beam': richNote.beam ? { '@number': beamNumber, '#text': richNote.beam } : undefined,
     'notations': notations,
     'lyric': lyric,
+    'dot': duration.dotted ? {} : undefined,
   };
   if (writeChord && richNote.chord && staff == 1) {
     let chordType: string = 'major';

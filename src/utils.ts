@@ -1,4 +1,4 @@
-import { Note, Scale, Semitone } from "musictheoryjs";
+import { Scale, Semitone } from "musictheoryjs";
 
 import { MainMusicParams } from "./params";
 
@@ -90,7 +90,6 @@ export const startingNotes = (params: MainMusicParams) => {
         globalSemitone(new Note(p3Note)),
         globalSemitone(new Note(p4Note)),
     ]
-
     const semitoneLimits = [
         [startingGlobalSemitones[0] + -12, startingGlobalSemitones[0] + 12 - 5],
         [startingGlobalSemitones[1] + -12, startingGlobalSemitones[1] + 12 - 5],
@@ -139,51 +138,97 @@ export const arrayOrderBy = function (array: Array<any>, selector: CallableFunct
 }
 
 
-export const chordTemplates: { [key: string]: Array<number> } = {
-    maj: [0, 4, 7],
-    min: [0, 3, 7],
-    dim: [0, 3, 6],
-    dim7: [0, 3, 6, 10],
-    aug: [0, 4, 8],
-    maj7: [0, 4, 7, 11],
-    min7: [0, 3, 7, 10],
-    dom7: [0, 4, 7, 10],
-    sus2: [0, 2, 7],
-    sus4: [0, 5, 7],
+export const RP = (degree: number, sharp?: number): RelativePitch => {
+    return {
+        degree,
+        sharp: sharp || 0,
+    }
 }
 
 
+export const chordTemplates: { [key: string]: Array<RelativePitch> } = {
+    maj: [RP(0), RP(2), RP(4)],
+    min: [RP(0), RP(2, -1), RP(4)],
+    dim: [RP(0), RP(2, -1), RP(4, -1)],
+    dim7: [RP(0), RP(2, -1), RP(4, -1), RP(5, 0)],
+    aug: [RP(0), RP(2), RP(4, 1)],
+    maj7: [RP(0), RP(2), RP(4), RP(6)],
+    min7: [RP(0), RP(2, -1), RP(4), RP(6)],
+    dom7: [RP(0), RP(2), RP(4), RP(6, -1)],
+    sus2: [RP(0), RP(1), RP(4)],
+    sus4: [RP(0), RP(3), RP(4)],
+}
+
+export class Note {
+    public pitch: Pitch;
+    public octave: number;
+
+    constructor(passedPitch: Pitch | string, passedOctave?: number) {
+        let pitch;
+        let octave;
+        if (typeof passedPitch == "string") {
+            const parsedType = passedPitch.match(/^([A-G](?:#|b)*)(\d*)/);
+            if (parsedType == null) {
+                throw "Invalid note name " + passedPitch;
+            }
+            octave = parseInt(parsedType[2]);
+
+            if (isNaN(octave)) {
+                octave = passedOctave || 4;
+            }
+            pitch = pitchNameToPitch(parsedType[1]);
+        } else {
+            pitch = passedPitch;
+            octave = passedOctave || 4;
+        }
+        this.pitch = pitch;
+        this.octave = octave;
+    }
+
+    get semitone() {
+        return pitchToSemitone(this.pitch)
+    };
+    set semitone(semitone: number) {
+        debugger;
+    };
+    get globalSemitone() {
+        return this.semitone + ((this.octave) * 12);
+    };
+    get gTone() {
+        return this.globalSemitone;
+    }
+    public toString() {
+        return pitchString(this.pitch) + "" + this.octave;
+    }
+    public copy() {
+        return new Note(this.pitch, this.octave);
+    }
+    public valueOf() {
+        // You can use this for direct comparison, yay
+        return this.globalSemitone;
+    }
+}
+
 export class Chord {
     public notes: Array<Note>;
-    public root: number;
+    public root: Pitch;
     public chordType: string;
     public toString() {
-        // Find correct Semitone key
-        const semitoneKeys = Object.keys(Semitone).filter(key => (Semitone as any)[key] as number === this.notes[0].semitone);
-        if (semitoneKeys.length == 0) {
-            return this.notes.map(note => note.toString()).join(", ");
-        }
-        let semitoneKey = semitoneKeys.filter(key => key.indexOf('b') == -1 && key.indexOf('s') == -1)[0] || semitoneKeys[0];
-        semitoneKey = semitoneKey.replace('s', '#');
-        return semitoneKey + this.chordType;
+        return pitchString(this.root) + this.chordType;
     }
-    constructor(semitoneOrName: number | string, chordType: string | undefined = undefined) {
-        let semitone;
-        if (typeof semitoneOrName === "string") {
-            semitone = semitoneOrName.match(/^\d+/);
-            const parsedType = semitoneOrName.match(/^\d+(.*)/);
-            if (semitone == null) {
-                throw "Invalid chord name " + semitoneOrName;
-            }
+    constructor(passedPitch: Pitch | string, chordType: string | undefined = undefined) {
+        let pitch: Pitch;
+        if (typeof passedPitch == "string") {
+            const parsedType = passedPitch.match(/^(\w(#|b)?)(.*)/);
             if (parsedType == null) {
-                throw "Invalid chord name " + semitoneOrName;
+                throw "Invalid chord name " + passedPitch;
             }
-            semitone = parseInt(semitone[0]);
+            pitch = pitchNameToPitch(parsedType[0]);
             chordType = chordType || parsedType[1];
         } else {
-            semitone = semitoneOrName;
+            pitch = passedPitch;
         }
-        this.root = parseInt(`${semitone}`);
+        this.root = pitch
         this.chordType = chordType || "?";
         const template = chordTemplates[this.chordType];
         if (template == undefined) {
@@ -191,7 +236,7 @@ export class Chord {
         }
         this.notes = [];
         for (let note of template) {
-            this.notes.push(new Note({ semitone: (semitone + note) % 12, octave: 1 }));
+            this.notes.push(new Note(PitchPlusRP(this.root, note), 1));
         }
     }
 }
@@ -210,7 +255,7 @@ export type RichNote = {
     originalNote?: Note,
     duration: number,
     freq?: number,
-    chord: Chord,
+    chord?: Chord,
     partIndex: number,
     scale: Scale,
     originalScale: Scale,
@@ -339,9 +384,11 @@ export type Melody = Array<MelodyNote>;
 export type ChordProblem = {
     parallelFifths: number,
     voiceDistance: number,
+    badInterval: number,
     chordProgression: number,
     dissonance: number,
     melody: number,
+    overlapping: number,
 }
 
 
@@ -368,13 +415,142 @@ export const totalChordScore = (chordChoice: ChordChoice, params: MainMusicParam
     chordChoice.totalScore = 0;
     if (prevProblem) {
         chordChoice.totalScore += prevProblem.voiceDistance;
+        chordChoice.totalScore += prevProblem.badInterval * 3;
     }
     if (nextProblem) {
         chordChoice.totalScore += nextProblem.voiceDistance;
+        chordChoice.totalScore += nextProblem.badInterval * 3;
     }
     if (selfProblem) {
         chordChoice.totalScore += selfProblem.dissonance;
         chordChoice.totalScore += selfProblem.melody;
+        chordChoice.totalScore += selfProblem.overlapping * 10;
     }
     return chordChoice.totalScore;
+}
+
+export type Pitch = {
+    degree: number,
+    sharp: number,
+}
+export type RelativePitch = {
+    degree: number,
+    sharp: number,
+}
+
+export const relativePitchType = (rp: RelativePitch): string => {
+    if ([0, 3, 4].includes(rp.degree)) {
+        if (rp.sharp == 0) {
+            return "perfect";
+        }
+        if (rp.sharp > 0) {
+            return "augmented";
+        }
+        if (rp.sharp < 0) {
+            return "diminished";
+        }
+    } else {
+        if (rp.sharp == 0) {
+            return "major";
+        }
+        if (rp.sharp > 0) {
+            return "augmented";
+        }
+        if (rp.sharp == -1) {
+            return "minor";
+        }
+        if (rp.sharp < -1) {
+            return "diminished";
+        }
+    }
+    debugger;
+    throw "Invalid relative pitch";
+}
+
+export const PitchPlusRP = (pitch: Pitch, relativePitch: RelativePitch): Pitch => {
+    // Relative pitches are not absolute, they are kind of like intervals (actually that's what they are)
+    // This function returns the absolute pitch, when the interval `relativePitch` is added to `pitch`
+
+    // Examples:
+    // augmented unison up:
+    // C flat (degree 0, sharp -1) + degree0sharp1 => C (degree 0, sharp 0)
+    // augmented unison up:
+    // C (degree 0, sharp 0) + degree0sharp1 => C sharp (degree 0, sharp 1)
+    // augmented unison up:
+    // C sharp (degree 0, sharp 1) + degree0sharp1 => C double sharp (degree 0, sharp 2)
+    // minor second up:
+    // C (degree 0, sharp 0) + degree1sharp-1 => D flat (degree 1, sharp -1)
+
+    // Calculation is easy. Just add the degrees up and then add the sharps up.
+    return {
+        degree: (pitch.degree + relativePitch.degree) % 7,
+        sharp: pitch.sharp + relativePitch.sharp,
+    }
+}
+
+export const getRP = (pitch1: Pitch, pitch2: Pitch): RelativePitch => {
+    return {
+        degree: (pitch2.degree - pitch1.degree + 7) % 7,
+        sharp: pitch2.sharp - pitch1.sharp,
+    }
+}
+
+const degreeNames = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
+export const pitchString = (pitch: Pitch) => {
+    let ret = degreeNames[pitch.degree];
+    if (pitch.sharp > 0) {
+        ret += '#'.repeat(pitch.sharp);
+    }
+    else if (pitch.sharp < 0) {
+        ret += 'b'.repeat(-pitch.sharp);
+    }
+    return ret;
+}
+
+export const allPitches = [
+    { degree: 0, sharp: 0 },  // C
+    { degree: 0, sharp: 1 },  // C#
+    { degree: 1, sharp: -1 },  // Db
+    { degree: 1, sharp: 0 },  // D
+    { degree: 1, sharp: 1 },  // D#
+    { degree: 2, sharp: -1 },  // Eb
+    { degree: 2, sharp: 0 },  // E
+    { degree: 2, sharp: 1 },  // E#
+    { degree: 3, sharp: -1 },  // Fb
+    { degree: 3, sharp: 0 },  // F
+    { degree: 3, sharp: 1 },  // F#
+    { degree: 4, sharp: -1 },  // Gb
+    { degree: 4, sharp: 0 },  // G
+    { degree: 4, sharp: 1 },  // G#
+    { degree: 5, sharp: -1 },  // Ab
+    { degree: 5, sharp: 0 },  // A
+    { degree: 5, sharp: 1 },  // A#
+    { degree: 6, sharp: -1 },  // Bb
+    { degree: 6, sharp: 0 },  // B
+    { degree: 6, sharp: 1 },  // B#
+    { degree: 0, sharp: -1 },  // Cb
+]
+
+export const pitchNameToPitch = (name: string): Pitch => {
+    const basename = name.replace(/\d/g, '');
+    for (const pitch of allPitches) {
+        if (pitchString(pitch) == basename) {
+            return pitch;
+        }
+    }
+    throw new Error(`Invalid pitch name: ${name}`);
+}
+
+export const pitchToSemitone = (pitch: Pitch): number => {
+    return (pitch.degree * 2 + pitch.sharp) % 12;
+}
+
+export const nonEnharmonicPitch = (semitone: number, chord: Chord): Pitch => {
+    // Given a semitone and a chord, return a degree (based on C) and a flatness/sharpness
+    const ret = {
+        degree: 0,
+        sharp: 0,
+    }
+
+    return ret;
 }

@@ -1,8 +1,8 @@
-import { Note, Scale, ScaleTemplates } from 'musictheoryjs';
+import { Scale, ScaleTemplates } from 'musictheoryjs';
 
 import builder from 'xmlbuilder';
 import { MainMusicParams } from './params';
-import { Chord, DivisionedRichnotes, globalSemitone, RichNote } from './utils';
+import { Chord, Note, DivisionedRichnotes, globalSemitone, RichNote } from './utils';
 
 const BEAT_LENGTH = 12
 
@@ -28,10 +28,7 @@ const noteToNote = (note: any) => {
   if (note instanceof Note) {
     return note;
   }
-  return new Note({
-    semitone: note._tone,
-    octave: note._octave,
-  });
+  return new Note(note.pitch, note.octave);
 }
 
 const chordToChord = (chord: any) => {
@@ -126,22 +123,13 @@ const flatScaleSemitones: Set<number> = new Set([
 
 function noteToPitch(richNote: RichNote) {
   const note = noteToNote(richNote.note);
-  const noteScale = scaleToScale(richNote.scale);
-  const scoreScale = new Scale({ key: 0, octave: note.octave, template: ScaleTemplates.major })
-  let direction = 'sharp';
-  if (noteScale) {
-    let base = noteScale.notes[0].semitone;
-    if (noteScale.toString().includes('Minor')) {
-      base = (base + 3) % 12;
-    }
-    if (flatScaleSemitones.has(base)) {
-      direction = 'flat';
-    }
-  }
-  const pitch = semitoneToPitch(note.semitone, scoreScale, direction);
+  // const noteScale = scaleToScale(richNote.scale);
+  // const scoreScale = new Scale({ key: 0, octave: note.octave, template: ScaleTemplates.major })
+
+  const degreeName = ['C', 'D', 'E', 'F', 'G', 'A', 'B'][note.pitch.degree];
   return {
-    'step': { '#text': pitch.noteName },
-    'alter': pitch.alter,
+    'step': { '#text': degreeName },
+    'alter': note.pitch.sharp,
     'octave': { '#text': note.octave }
   };
 }

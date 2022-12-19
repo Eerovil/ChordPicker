@@ -6,7 +6,7 @@ import { toXml } from "./src/musicxmlgen";
 import { MainMusicParams } from "./src/params";
 import { loadPlayer, renderMusic } from "./src/player"
 import { getChordProblem, getProblemsBetweenChords } from "./src/problems";
-import { ChordChoice, ChordChoicesByDivision, DivisionedRichnotes, Melody, totalChordScore } from "./src/utils"
+import { Chord, ChordChoice, ChordChoicesByDivision, DivisionedRichnotes, Melody, totalChordScore } from "./src/utils"
 
 buildTables();
 
@@ -27,9 +27,12 @@ buildTables();
     const divisionedNotes: DivisionedRichnotes = {};
     melodyToRichNotes(melody, divisionedNotes, params);
     const chordGenerator = new ChordGenerator(params);
-    let chord = chordGenerator.getChord();
     const ret = [];
-    while (chord) {
+    for (const chord of chordGenerator.getChord()) {
+        if (!chord || !chord.notes) {
+            debugger;
+            break;
+        }
         for (const inversionAndDoubling of chordInversionsAndDoublings(chord)) {
             console.log(chord.toString())
             inversionAndDoubling.division = division;
@@ -44,7 +47,7 @@ buildTables();
             ret.push({
                 'name': chord.toString(),
                 numeral: '',
-                chord,
+                chord: chord,
                 inversion: inversionAndDoubling.inversion,
                 doubling: inversionAndDoubling.doubling,
                 prevProblem,
@@ -53,7 +56,6 @@ buildTables();
             } as ChordChoice);
             ret[ret.length - 1].totalScore = totalChordScore(ret[ret.length - 1], params);
         }
-        chord = chordGenerator.getChord();
     }
     return ret;
 }

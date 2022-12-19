@@ -1,6 +1,6 @@
 import { Scale } from "musictheoryjs";
 import { MainMusicParams } from "./params"
-import { BEAT_LENGTH, ChordChoice, DivisionedRichnotes, globalSemitone, startingNotes } from "./utils"
+import { BEAT_LENGTH, ChordChoice, DivisionedRichnotes, getRP, globalSemitone, relativePitchType, startingNotes } from "./utils"
 
 export const chordChoiceToDivisionedNotes = (chordChoice: ChordChoice, division: number, divisionedNotes: DivisionedRichnotes, params: MainMusicParams) => {
     const chord = chordChoice.chord;
@@ -37,6 +37,7 @@ export const chordChoiceToDivisionedNotes = (chordChoice: ChordChoice, division:
     }
 
     // Use lowest possible gTone for part 3
+
     while (globalSemitone(bassNote) < semitoneLimits[3][0]) {
         bassNote.octave += 1;
     }
@@ -94,7 +95,7 @@ export const chordChoiceToDivisionedNotes = (chordChoice: ChordChoice, division:
             debugger;
         }
         let iterations = 0;
-        while (globalSemitone(part2Note) < globalSemitone(bassNote) || globalSemitone(part2Note) < semitoneLimits[2][0]) {
+        while (part2Note.gTone < bassNote.gTone || part2Note.gTone < semitoneLimits[2][0]) {
             iterations += 1;
             if (iterations > 100) {
                 debugger;
@@ -102,14 +103,23 @@ export const chordChoiceToDivisionedNotes = (chordChoice: ChordChoice, division:
             }
             part2Note.octave += 1;
         }
-        if (globalSemitone(part2Note) > semitoneLimits[2][1]) {
+        if (part2Note.gTone > semitoneLimits[2][1]) {
             score -= 100;
         }
         if (prevPart2Note) {
-            score -= Math.abs(globalSemitone(part2Note) - globalSemitone(prevPart2Note.note))
+            score -= Math.min(
+                0,
+                Math.abs(globalSemitone(part2Note) - globalSemitone(prevPart2Note.note)) - 2
+            )
+            const relativePitch = getRP(prevPart2Note.note.pitch, part2Note.pitch);
+            const rpType = relativePitchType(relativePitch);
+            if (['augmented', 'diminished'].includes(rpType)) {
+                score -= 100;
+            }
         }
+
         iterations = 0;
-        while (globalSemitone(part1Note) < globalSemitone(part2Note) || globalSemitone(part1Note) < semitoneLimits[1][0]) {
+        while (part1Note < part2Note || globalSemitone(part1Note) < semitoneLimits[1][0]) {
             iterations += 1;
             if (iterations > 100) {
                 debugger;
@@ -117,14 +127,27 @@ export const chordChoiceToDivisionedNotes = (chordChoice: ChordChoice, division:
             }
             part1Note.octave += 1;
         }
-        if (globalSemitone(part1Note) > semitoneLimits[1][1]) {
+        if (part1Note.gTone > semitoneLimits[1][1]) {
             score -= 100;
         }
-        if (melodyNote && globalSemitone(part1Note) > globalSemitone(melodyNote.note)) {
-            score -= 100;
+        if (melodyNote) {
+            if (part1Note.gTone > melodyNote.note.gTone) {
+                score -= 1000;
+                console.log("Melody note is over: ", melodyNote.note.toString(), "part 1 note is", part1Note.toString())
+            } else {
+                console.log("Melody note is", melodyNote.note.toString(), "part 1 note is", part1Note.toString())
+            }
         }
         if (prevPart1Note) {
-            score -= Math.abs(globalSemitone(part1Note) - globalSemitone(prevPart1Note.note))
+            score -= Math.min(
+                0,
+                Math.abs(globalSemitone(part1Note) - globalSemitone(prevPart1Note.note)) - 2
+            )
+            const relativePitch = getRP(prevPart1Note.note.pitch, part1Note.pitch);
+            const rpType = relativePitchType(relativePitch);
+            if (['augmented', 'diminished'].includes(rpType)) {
+                score -= 100;
+            }
         }
         if (bestPermutation == null || score > bestPermutationScore) {
             bestPermutation = i;
@@ -137,6 +160,7 @@ export const chordChoiceToDivisionedNotes = (chordChoice: ChordChoice, division:
     }
 
     const bestPermutationNotes = permutations[bestPermutation];
+    console.log("Best permutation is", bestPermutationNotes, "score", bestPermutationScore)
 
     let part1Note = chord.notes[bestPermutationNotes[0]].copy();
     if (!part1Note) {

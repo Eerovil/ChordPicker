@@ -1,6 +1,5 @@
-import { Note } from "musictheoryjs";
 import { MainMusicParams } from "./params";
-import { Chord, DivisionedRichnotes, globalSemitone, Melody, MelodyNote, startingNotes } from "./utils";
+import { Chord, Note, DivisionedRichnotes, globalSemitone, Melody, MelodyNote, startingNotes } from "./utils";
 import { BEAT_LENGTH } from "./utils";
 
 export const melodyToRichNotes = (melody: Melody, disivionedRichNotes: DivisionedRichnotes, params: MainMusicParams) => {
@@ -88,7 +87,6 @@ export const melodyToRichNotes = (melody: Melody, disivionedRichNotes: Divisione
             originalScale: scale,
             tension: 0,
             partIndex: 0,
-            chord: new Chord(0, 'maj'),
         });
         currentDivision += duration;
     }

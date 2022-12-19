@@ -37,6 +37,16 @@ export const melodyToRichNotes = (melody: Melody, disivionedRichNotes: Divisione
         }
         const newNote = new Note(noteName);
         let newGTone = globalSemitone(newNote);
+        if (prevGTone) {
+            if (newGTone - prevGTone > 7) {
+                newGTone -= 12;
+                newNote.octave -= 1;
+            }
+            if (newGTone - prevGTone < -7) {
+                newGTone += 12;
+                newNote.octave += 1;
+            }
+        }
         if (prevGTone && note.direction != 0) {
             if (note.direction == 1) {
                 while (newGTone <= prevGTone) {

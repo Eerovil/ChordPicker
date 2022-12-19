@@ -139,10 +139,20 @@ createApp({
           ret[rootName] = [];
         }
         ret[rootName].push(chord);
+        ret[rootName].sort((a, b) => {
+          return a.totalScore - b.totalScore;
+        });
       }
+
       return ret;
     },
     chordChoicesByTotalScore() {
+      return this.chordChoices.sort((a, b) => {
+        return a.totalScore - b.totalScore;
+      });
+    },
+    chordChoicesWithSingleDoublingByTotalScore() {
+      // Only show one (best) doubling per chordchoice
       return this.chordChoices.sort((a, b) => {
         return a.totalScore - b.totalScore;
       });

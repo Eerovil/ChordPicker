@@ -17,8 +17,9 @@ export const getProblemsBetweenChords = (prevChord: ChordChoice, nextChord: Chor
     }
 
     const fakeDivisionedNotes = {
-        [prevChord.division]: [...divisionedNotes[prevChord.division]],
-        [nextChord.division]: [...divisionedNotes[nextChord.division]],
+        // Add melody to divisionednotes
+        [prevChord.division]: divisionedNotes[prevChord.division].filter(rn => rn.partIndex == 0),
+        [nextChord.division]: divisionedNotes[nextChord.division].filter(rn => rn.partIndex == 0),
     };
     chordChoiceToDivisionedNotes(prevChord, prevChord.division, fakeDivisionedNotes, params);
     chordChoiceToDivisionedNotes(nextChord, nextChord.division, fakeDivisionedNotes, params);
@@ -40,11 +41,23 @@ export const getProblemsBetweenChords = (prevChord: ChordChoice, nextChord: Chor
         nextRichNotes.filter(rn => rn.partIndex == 3)[0],
     ];
 
-    const part1Distance = Math.abs(globalSemitone(prevNotes[1].note) - globalSemitone(nextNotes[1].note));
-    console.log('part1Distance', part1Distance, gToneString(globalSemitone(prevNotes[1].note)), gToneString(globalSemitone(nextNotes[1].note)));
-    const part2Distance = Math.abs(globalSemitone(prevNotes[2].note) - globalSemitone(nextNotes[2].note));
+    const part1Distance = Math.max(
+        0,
+        Math.abs(globalSemitone(prevNotes[1].note) - globalSemitone(nextNotes[1].note)) - 2
+    );
+    console.log('part1Distance', prevChord.chord?.toString(), nextChord.chord?.toString(), part1Distance, gToneString(globalSemitone(prevNotes[1].note)), gToneString(globalSemitone(nextNotes[1].note)));
+    const part2Distance = Math.max(
+        0,
+        Math.abs(globalSemitone(prevNotes[2].note) - globalSemitone(nextNotes[2].note)) - 2
+    );
 
     ret.voiceDistance = (part1Distance + part2Distance) * 3;
+
+    const part3Distance = Math.max(
+        0,
+        Math.abs(globalSemitone(prevNotes[3].note) - globalSemitone(nextNotes[3].note)) - 2
+    );
+    ret.voiceDistance += part3Distance;
 
     return ret;
 };

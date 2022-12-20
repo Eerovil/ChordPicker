@@ -20,8 +20,8 @@ export const getProblemsBetweenChords = (prevChord: ChordChoice, nextChord: Chor
 
     const fakeDivisionedNotes = {
         // Add melody to divisionednotes
-        [prevChord.division]: divisionedNotes[prevChord.division].filter(rn => rn.partIndex == 0),
-        [nextChord.division]: divisionedNotes[nextChord.division].filter(rn => rn.partIndex == 0),
+        [prevChord.division]: (divisionedNotes[prevChord.division] || []).filter(rn => rn.partIndex == 0),
+        [nextChord.division]: (divisionedNotes[nextChord.division] || []).filter(rn => rn.partIndex == 0),
     };
     chordChoiceToDivisionedNotes(prevChord, prevChord.division, fakeDivisionedNotes, params);
     chordChoiceToDivisionedNotes(nextChord, nextChord.division, fakeDivisionedNotes, params);
@@ -96,9 +96,9 @@ export const getChordProblem = (chord: ChordChoice, divisionedNotes: DivisionedR
         return ret;
     }
     const fakeDivisionedNotes = {
-        [chord.division]: divisionedNotes[chord.division],
+        [chord.division]: divisionedNotes[chord.division] || [],
     };
-    chordChoiceToDivisionedNotes(chord, chord.division, divisionedNotes, params);
+    chordChoiceToDivisionedNotes(chord, chord.division, fakeDivisionedNotes, params);
 
     // Check part0 and part3 dissonances
     const richNotes = fakeDivisionedNotes[chord.division];

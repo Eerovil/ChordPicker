@@ -64,8 +64,10 @@ export const chordChoiceToDivisionedNotes = (chordChoice: ChordChoice, division:
     }
 
     // We should be left with 2 notes. If 3, lets remove number 2 if it exists
-    if (notesLeft.length == 3 && notesLeft.indexOf(2) >= 0) {
-        notesLeft.splice(notesLeft.indexOf(2), 1);
+    if (melodyNote) {
+        if (notesLeft.length == 3 && notesLeft.indexOf(2) >= 0) {
+            notesLeft.splice(notesLeft.indexOf(2), 1);
+        }
     }
 
     // Try all combinations
@@ -94,6 +96,12 @@ export const chordChoiceToDivisionedNotes = (chordChoice: ChordChoice, division:
         if (!part2Note) {
             debugger;
         }
+        let part0Note;
+        if (!melodyNote) {
+            part0Note = chord.notes[permutation[2]].copy();
+        }
+
+        // Part 2 (Tenor)
         let iterations = 0;
         while (part2Note.gTone < bassNote.gTone || part2Note.gTone < semitoneLimits[2][0]) {
             iterations += 1;
@@ -118,6 +126,7 @@ export const chordChoiceToDivisionedNotes = (chordChoice: ChordChoice, division:
             }
         }
 
+        // Part 1 (Alto)
         iterations = 0;
         while (part1Note < part2Note || globalSemitone(part1Note) < semitoneLimits[1][0]) {
             iterations += 1;
@@ -146,6 +155,23 @@ export const chordChoiceToDivisionedNotes = (chordChoice: ChordChoice, division:
             const relativePitch = getRP(prevPart1Note.note.pitch, part1Note.pitch);
             const rpType = relativePitchType(relativePitch);
             if (['augmented', 'diminished'].includes(rpType)) {
+                score -= 100;
+            }
+        }
+
+
+        // Part 0 (Soprano)
+        if (part0Note) {
+            let iterations = 0;
+            while (part0Note.gTone < part1Note.gTone || part0Note.gTone < semitoneLimits[0][0]) {
+                iterations += 1;
+                if (iterations > 100) {
+                    debugger;
+                    return;
+                }
+                part0Note.octave += 1;
+            }
+            if (part0Note.gTone > semitoneLimits[0][1]) {
                 score -= 100;
             }
         }
@@ -196,4 +222,24 @@ export const chordChoiceToDivisionedNotes = (chordChoice: ChordChoice, division:
         originalScale: (window as any).CMAJ,
         tension: 0,
     })
+
+    if (!melodyNote) {
+        let part0Note = chord.notes[bestPermutationNotes[2]].copy();
+        if (!part0Note) {
+            debugger;
+        }
+        while (globalSemitone(part0Note) < globalSemitone(part1Note) || globalSemitone(part0Note) < semitoneLimits[0][0]) {
+            part0Note.octave += 1;
+        }
+        divisionedNotes[division].push({
+            note: part0Note,
+            duration: BEAT_LENGTH,
+            partIndex: 0,
+            chord: chord,
+            scale: (window as any).CMAJ,
+            originalScale: (window as any).CMAJ,
+            tension: 0,
+        })
+    }
+    console.log("divisionedNotes:", divisionedNotes[division])
 }

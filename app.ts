@@ -1,6 +1,7 @@
 import { buildTables, Scale } from "musictheoryjs";
 import { ChordGenerator, chordInversionsAndDoublings } from "./src/allchords";
 import { chordChoiceToDivisionedNotes } from "./src/chordchoicetonotes";
+import { cleanDivisionedNotes } from "./src/cleandivisionedNotes";
 import { melodyToRichNotes } from "./src/melodytorichnotes";
 import { toXml } from "./src/musicxmlgen";
 import { MainMusicParams } from "./src/params";
@@ -21,6 +22,7 @@ buildTables();
         chordChoiceToDivisionedNotes(chords[division], parseInt(division), divisionedNotes, params);
     }
     console.log(divisionedNotes);
+    cleanDivisionedNotes(divisionedNotes, params);
     const scoreXml = toXml(divisionedNotes, params);
     await renderMusic(scoreXml);
 }

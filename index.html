@@ -120,6 +120,7 @@
                   </div>
                 </div>
               </div>
+              <button @click="deleteChord()">DELETE</button>
               <button @click="saveChord()">OK</button>
             </div>
             <div v-else class="chord">
@@ -284,10 +285,19 @@ createApp({
       }
       this.editingChord = index;
       this.chordChoices = await window.getChordChoices(this.melody, index, prevChord, nextChord, this.params);
+      if (this.chords[index]) {
+        this.selectedChordRoot = this.chords[index].chord.notes[0].pitchName();
+        this.selectedChord = this.chords[index];
+      }
     },
     saveChord() {
       this.chords[this.editingChord] = this.selectedChord;
       this.chords[this.editingChord].division = this.editingChord;
+      this.editingChord = -1;
+      this.refreshXML();
+    },
+    deleteChord() {
+      delete this.chords[this.editingChord];
       this.editingChord = -1;
       this.refreshXML();
     },

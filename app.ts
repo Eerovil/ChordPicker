@@ -7,13 +7,15 @@ import { toXml } from "./src/musicxmlgen";
 import { MainMusicParams } from "./src/params";
 import { loadPlayer, renderMusic } from "./src/player"
 import { getChordProblem, getProblemsBetweenChords } from "./src/problems";
-import { Chord, ChordChoice, ChordChoicesByDivision, chordTemplates, DivisionedRichnotes, Melody } from "./src/utils"
+import { Chord, Note, ChordChoice, ChordChoicesByDivision, chordTemplates, DivisionedRichnotes, Melody } from "./src/utils"
 
 buildTables();
 
 (window as any).MainMusicParams = MainMusicParams;
 (window as any).CMAJ = new Scale('Cmaj');
 (window as any).chordTypes = Object.keys(chordTemplates);
+(window as any).Chord = Chord;
+(window as any).Note = Note;
 
 (window as any).loadMelody = async (melody: Melody, chords: ChordChoicesByDivision, params: MainMusicParams) => {
     const divisionedNotes: DivisionedRichnotes = {};

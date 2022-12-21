@@ -213,6 +213,12 @@ export class Note {
         // You can use this for direct comparison, yay
         return this.globalSemitone;
     }
+    static fromObject(obj: any) {
+        return new Note(
+            obj.pitch,
+            obj.octave,
+        );
+    }
 }
 
 export class Chord {
@@ -247,6 +253,9 @@ export class Chord {
         for (let note of template) {
             this.notes.push(new Note(PitchPlusRP(this.root, note), 1));
         }
+    }
+    static fromObject(obj: any) {
+        return new Chord(obj.root, obj.chordType);
     }
 }
 
@@ -511,6 +520,16 @@ export const relativePitchType = (rp: RelativePitch): string => {
     throw "Invalid relative pitch";
 }
 
+export const degreeToSemitone: {[key: number] : number} = {
+    [0]: 0,
+    [1]: 2,
+    [2]: 4,
+    [3]: 5,
+    [4]: 7,
+    [5]: 9,
+    [6]: 11,
+}
+
 export const PitchPlusRP = (pitch: Pitch, relativePitch: RelativePitch): Pitch => {
     // Relative pitches are not absolute, they are kind of like intervals (actually that's what they are)
     // This function returns the absolute pitch, when the interval `relativePitch` is added to `pitch`
@@ -525,11 +544,34 @@ export const PitchPlusRP = (pitch: Pitch, relativePitch: RelativePitch): Pitch =
     // minor second up:
     // C (degree 0, sharp 0) + degree1sharp-1 => D flat (degree 1, sharp -1)
 
-    // Calculation is easy. Just add the degrees up and then add the sharps up.
-    return {
+    // D (degree 1, sharp 0) + degree2sharp0 => F sharp (degree 2, sharp 1)
+    // Db (degree 1, sharp -1) + degree2sharp0 => F (degree 2, sharp 0)
+    // Db (degree 1, sharp -1) + degree4sharp0 => Ab (degree 4, sharp -1)
+
+    // Calculation is NOT easy. 
+    // X + degree2sharp0
+    // First check what it would be in C major: an E natural.
+    // Then we add the distance the the given X. E + X == Result.
+    
+    // Example: E + degree1sharp0 should be F sharp, so I guess we must use semitones.
+
+    // In the case of major third from D, we first check that a major third (`intervalInSemitones`) is 4 semitones.
+    // Then we add two degrees to `pitch` (that is `ret`) and see how far that is from the wanted semitone distance.
+    // Add sharps to get the correct semitone distance
+
+    const originSemitone = pitchToSemitone(pitch);
+    const intervalInSemitones = pitchToSemitone(relativePitch)
+    const targetSemitone = originSemitone + intervalInSemitones;
+
+    let ret = {
         degree: (pitch.degree + relativePitch.degree) % 7,
-        sharp: pitch.sharp + relativePitch.sharp,
+        sharp: pitch.sharp,
     }
+
+    ret.sharp += targetSemitone - pitchToSemitone(ret)
+
+    return ret;
+
 }
 
 export const getRP = (pitch1: Pitch, pitch2: Pitch): RelativePitch => {
@@ -574,16 +616,6 @@ export const allPitches = [
     { degree: 6, sharp: 1 },  // B#
     { degree: 0, sharp: -1 },  // Cb
 ]
-
-export const degreeToSemitone: {[key: number] : number} = {
-    [0]: 0,
-    [1]: 2,
-    [2]: 4,
-    [3]: 5,
-    [4]: 7,
-    [5]: 9,
-    [6]: 11,
-}
 
 export const pitchNameToPitch = (name: string): Pitch => {
     const basename = name.replace(/\d/g, '');

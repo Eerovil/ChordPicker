@@ -139,6 +139,7 @@
         <button id="btn-play">PLAY</button>
         <button id="btn-pause">PAUSE</button>
         <button id="btn-stop">STOP</button>
+        <button id="btn-save" @click="saveSong()">SAVE</button>
       </div>
     </div>
 </body>
@@ -165,6 +166,14 @@ createApp({
   },
   mounted() {
     this.params = new window.MainMusicParams();
+
+    this.chords = JSON.parse(window.localStorage.getItem('chords') || "{}") || {};
+    for (let key in this.chords) {
+      this.chords[key].chord = window.Chord.fromObject(this.chords[key].chord);
+      this.chords[key].notes = (this.chords[key].notes || []).map(note => window.Note.fromObject(note));
+    }
+    this.melody = JSON.parse(window.localStorage.getItem('melody') || "[]") || [];
+    this.melodyText = window.localStorage.getItem('melodyText') || "";
   },
   computed: {
     noteNames() {
@@ -246,6 +255,11 @@ createApp({
     }
   },
   methods: {
+    saveSong() {
+      window.localStorage.setItem('chords', JSON.stringify(this.chords));
+      window.localStorage.setItem('melody', JSON.stringify(this.melody));
+      window.localStorage.setItem('melodyText', this.melodyText);
+    },
     initMelodyNote(noteName) {
       return {
         'note': noteName,  // Can be a space or CDEFGAH

@@ -561,7 +561,7 @@ export const PitchPlusRP = (pitch: Pitch, relativePitch: RelativePitch): Pitch =
 
     const originSemitone = pitchToSemitone(pitch);
     const intervalInSemitones = pitchToSemitone(relativePitch)
-    const targetSemitone = originSemitone + intervalInSemitones;
+    const targetSemitone = (originSemitone + intervalInSemitones) % 12;
 
     let ret = {
         degree: (pitch.degree + relativePitch.degree) % 7,

@@ -129,7 +129,7 @@ function noteToPitch(richNote: RichNote) {
   const degreeName = ['C', 'D', 'E', 'F', 'G', 'A', 'B'][note.pitch.degree];
   return {
     'step': { '#text': degreeName },
-    'alter': note.pitch.sharp,
+    'alter': note.pitch.sharp ? note.pitch.sharp : undefined,
     'octave': { '#text': note.octave }
   };
 }
@@ -274,7 +274,7 @@ function addRichNoteToMeasure(richNote: RichNote, measure: builder.XMLElement, s
       'harmony': {
         'root': {
           'root-step': { '#text': degreeName },
-          'root-alter': rootNote.pitch.sharp,
+          'root-alter': rootNote.pitch.sharp ? rootNote.pitch.sharp : undefined,
         },
         'kind': {
           '@halign': 'center',

@@ -200,6 +200,9 @@ export class Note {
     public toString() {
         return pitchString(this.pitch) + "" + this.octave;
     }
+    get name() {
+        return this.toString();
+    }
     public pitchName() {
         return pitchString(this.pitch);
     }
@@ -218,6 +221,9 @@ export class Chord {
     public chordType: string;
     public toString() {
         return pitchString(this.root) + this.chordType;
+    }
+    get name() {
+        return this.toString();
     }
     constructor(passedPitch: Pitch | string, chordType: string | undefined = undefined) {
         let pitch: Pitch;
@@ -383,15 +389,39 @@ export type MelodyNote = {
 };
 export type Melody = Array<MelodyNote>;
 
+export type ChordProblemType = "voiceDistance" | "badInterval" | "chordProgression" | "dissonance" | "melody" | "overlapping";
 
-export type ChordProblem = {
-    parallelFifths: number,
-    voiceDistance: number,
-    badInterval: number,
-    chordProgression: number,
-    dissonance: number,
-    melody: number,
-    overlapping: number,
+export type ChordProblemValue = {
+    type: ChordProblemType,
+    value: number,
+    comment: string,
+}
+
+
+export class ChordProblem {
+    problems: { [key in ChordProblemType]: Array<ChordProblemValue> } = {
+        voiceDistance: [],
+        badInterval: [],
+        chordProgression: [],
+        dissonance: [],
+        melody: [],
+        overlapping: [],
+    }
+    notes: Array<Note> = [];
+    public getScore(slug: ChordProblemType) {
+        let score = 0;
+        for (const problem of this.problems[slug]) {
+            score += problem.value;
+        }
+        return score;
+    }
+    get totalScore() {
+        let score = 0;
+        for (const key in this.problems) {
+            score += this.getScore(key as ChordProblemType);
+        }
+        return score;
+    }
 }
 
 
@@ -411,25 +441,6 @@ export type ChordChoice = {
 
 export type ChordChoicesByDivision = {
     [key: number]: ChordChoice,
-}
-
-export const totalChordScore = (chordChoice: ChordChoice, params: MainMusicParams) => {
-    const { prevProblem, nextProblem, selfProblem } = chordChoice;
-    chordChoice.totalScore = 0;
-    if (prevProblem) {
-        chordChoice.totalScore += prevProblem.voiceDistance;
-        chordChoice.totalScore += prevProblem.badInterval * 3;
-    }
-    if (nextProblem) {
-        chordChoice.totalScore += nextProblem.voiceDistance;
-        chordChoice.totalScore += nextProblem.badInterval * 3;
-    }
-    if (selfProblem) {
-        chordChoice.totalScore += selfProblem.dissonance;
-        chordChoice.totalScore += selfProblem.melody;
-        chordChoice.totalScore += selfProblem.overlapping * 10;
-    }
-    return chordChoice.totalScore;
 }
 
 export type Pitch = {
@@ -534,6 +545,16 @@ export const allPitches = [
     { degree: 0, sharp: -1 },  // Cb
 ]
 
+export const degreeToSemitone: {[key: number] : number} = {
+    [0]: 0,
+    [1]: 2,
+    [2]: 4,
+    [3]: 5,
+    [4]: 7,
+    [5]: 9,
+    [6]: 11,
+}
+
 export const pitchNameToPitch = (name: string): Pitch => {
     const basename = name.replace(/\d/g, '');
     for (const pitch of allPitches) {
@@ -545,7 +566,7 @@ export const pitchNameToPitch = (name: string): Pitch => {
 }
 
 export const pitchToSemitone = (pitch: Pitch): number => {
-    return (pitch.degree * 2 + pitch.sharp) % 12;
+    return (degreeToSemitone[pitch.degree] + pitch.sharp) % 12;
 }
 
 export const nonEnharmonicPitch = (semitone: number, chord: Chord): Pitch => {

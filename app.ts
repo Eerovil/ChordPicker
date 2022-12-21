@@ -6,7 +6,7 @@ import { toXml } from "./src/musicxmlgen";
 import { MainMusicParams } from "./src/params";
 import { loadPlayer, renderMusic } from "./src/player"
 import { getChordProblem, getProblemsBetweenChords } from "./src/problems";
-import { Chord, ChordChoice, ChordChoicesByDivision, DivisionedRichnotes, Melody, totalChordScore } from "./src/utils"
+import { Chord, ChordChoice, ChordChoicesByDivision, DivisionedRichnotes, Melody } from "./src/utils"
 
 buildTables();
 
@@ -19,6 +19,7 @@ buildTables();
     for (const division in chords) {
         chordChoiceToDivisionedNotes(chords[division], parseInt(division), divisionedNotes, params);
     }
+    console.log(divisionedNotes);
     const scoreXml = toXml(divisionedNotes, params);
     await renderMusic(scoreXml);
 }
@@ -54,7 +55,7 @@ buildTables();
                 nextProblem,
                 selfProblem: getChordProblem(inversionAndDoubling, divisionedNotes, params),
             } as ChordChoice);
-            ret[ret.length - 1].totalScore = totalChordScore(ret[ret.length - 1], params);
+            ret[ret.length - 1].totalScore = ret[ret.length - 1].totalScore;
         }
     }
     return ret;

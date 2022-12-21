@@ -200,6 +200,9 @@ export class Note {
     public toString() {
         return pitchString(this.pitch) + "" + this.octave;
     }
+    public pitchName() {
+        return pitchString(this.pitch);
+    }
     public copy() {
         return new Note(this.pitch, this.octave);
     }

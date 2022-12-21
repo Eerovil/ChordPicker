@@ -55,7 +55,7 @@
           <div v-if="chords[chordSlot]">
             <div v-if="editingChord == chordSlot" class="editing-chord">
               <select v-model="selectedChordRoot">
-                <option v-for="root in chordRootChoices" :value="root">{{ noteNames[root] }}</option>
+                <option v-for="rootPitchName in chordRootChoices" :value="rootPitchName">{{ rootPitchName }}</option>
               </select>
               <select v-if="selectedChordRoot != null" v-model="selectedChord">
                 <option v-for="chord in chordInversionsAndDoublings[selectedChordRoot]" :value="chord">{{ chord.chord.chordType }} {{ chord.inversion }} {{ chord.doubling }}</option>
@@ -125,7 +125,7 @@ createApp({
       let ret = new Set();
       for (let i = 0; i < this.chordChoices.length; i++) {
         const chord = this.chordChoices[i];
-        const rootName = chord.chord.notes[0].semitone;
+        const rootName = chord.chord.notes[0].pitchName();
         ret.add(rootName);
       }
       return Array.from(ret);
@@ -134,7 +134,7 @@ createApp({
       const ret = {};
       for (let i = 0; i < this.chordChoices.length; i++) {
         const chord = this.chordChoices[i];
-        const rootName = chord.chord.notes[0].semitone;
+        const rootName = chord.chord.notes[0].pitchName();
         if (!ret[rootName]) {
           ret[rootName] = [];
         }

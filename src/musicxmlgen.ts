@@ -267,22 +267,14 @@ function addRichNoteToMeasure(richNote: RichNote, measure: builder.XMLElement, s
       kindText = "sus4";
     }
 
-    const scoreScale = new Scale({ key: 0, octave: 4, template: ScaleTemplates.major })
-    let direction = 'sharp';
-    richNote.scale = scaleToScale(richNote.scale);
-    if (richNote.scale) {
-      const base = richNote.scale.notes[0].semitone;
-      if (flatScaleSemitones.has(base)) {
-        direction = 'flat';
-      }
-    }
-    const pitch = semitoneToPitch(noteToNote(richNote.chord.notes[0]).semitone, scoreScale, direction);
+    const rootNote = noteToNote(richNote.chord.notes[0]);
+    const degreeName = ['C', 'D', 'E', 'F', 'G', 'A', 'B'][rootNote.pitch.degree];
 
     measure.ele({
       'harmony': {
         'root': {
-          'root-step': { '#text': pitch.noteName },
-          'root-alter': pitch.alter,
+          'root-step': { '#text': degreeName },
+          'root-alter': rootNote.pitch.sharp,
         },
         'kind': {
           '@halign': 'center',

@@ -6,12 +6,13 @@ import { toXml } from "./src/musicxmlgen";
 import { MainMusicParams } from "./src/params";
 import { loadPlayer, renderMusic } from "./src/player"
 import { getChordProblem, getProblemsBetweenChords } from "./src/problems";
-import { Chord, ChordChoice, ChordChoicesByDivision, DivisionedRichnotes, Melody } from "./src/utils"
+import { Chord, ChordChoice, ChordChoicesByDivision, chordTemplates, DivisionedRichnotes, Melody } from "./src/utils"
 
 buildTables();
 
 (window as any).MainMusicParams = MainMusicParams;
 (window as any).CMAJ = new Scale('Cmaj');
+(window as any).chordTypes = Object.keys(chordTemplates);
 
 (window as any).loadMelody = async (melody: Melody, chords: ChordChoicesByDivision, params: MainMusicParams) => {
     const divisionedNotes: DivisionedRichnotes = {};
@@ -35,7 +36,6 @@ buildTables();
             break;
         }
         for (const inversionAndDoubling of chordInversionsAndDoublings(chord)) {
-            console.log(chord.toString())
             inversionAndDoubling.division = division;
             let prevProblem;
             let nextProblem;
@@ -55,7 +55,11 @@ buildTables();
                 nextProblem,
                 selfProblem: getChordProblem(inversionAndDoubling, divisionedNotes, params),
             } as ChordChoice);
-            ret[ret.length - 1].totalScore = ret[ret.length - 1].totalScore;
+            let totalScore = 0;
+            totalScore += ret[ret.length - 1].prevProblem?.totalScore || 0;
+            totalScore += ret[ret.length - 1].nextProblem?.totalScore || 0;
+            totalScore += ret[ret.length - 1].selfProblem?.totalScore || 0;
+            ret[ret.length - 1].totalScore = totalScore;
         }
     }
     return ret;

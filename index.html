@@ -27,11 +27,30 @@
         margin: 1px;
         width: 2rem;
       }
+      .d-flex {
+        display: flex;
+      }
+      .editing-chord {
+        display: flex;
+        flex-direction: column;
+        padding: 1rem;
+        border: 1px solid black;
+        height: 30rem;
+        width: 100%;
+      }
+      .chord-filters {
+        display: flex;
+        flex-direction: column;
+      }
+      .chord-filters > div {
+        display: flex;
+        justify-content: space-between;
+      }
     </style>
 </head>
 
 <body>
-    <div id="vue-template">
+    <div id="vue-template" class="d-flex" style="flex-direction: column;">
       <input type="text" v-model="melodyText"></input>
       <div id="melodys">
         <div v-for="note in melody">
@@ -51,18 +70,56 @@
 
       </div>
       <div id="chords">
-        <div v-for="chordSlot in chordSlots">
-          <div v-if="chords[chordSlot]">
+        <div v-for="chordSlot in chordSlots" class="d-flex">
+          <div v-if="chords[chordSlot]" class="d-flex">
             <div v-if="editingChord == chordSlot" class="editing-chord">
-              <select v-model="selectedChordRoot">
-                <option v-for="rootPitchName in chordRootChoices" :value="rootPitchName">{{ rootPitchName }}</option>
-              </select>
-              <select v-if="selectedChordRoot != null" v-model="selectedChord">
-                <option v-for="chord in chordInversionsAndDoublings[selectedChordRoot]" :value="chord">{{ chord.chord.chordType }} {{ chord.inversion }} {{ chord.doubling }}</option>
-              </select>
+              <div class="chord-filters">
+                <div>
+                  <label for="chord-root-filter">Root</label>
+                  <select v-model="selectedChordRoot" id="chord-root-filter">
+                    <option :value="null">Any</option>
+                    <option v-for="rootPitchName in chordRootChoices" :value="rootPitchName">{{ rootPitchName }}</option>
+                  </select>
+                </div>
+                <div>
+                  <label for="chord-roman-filter">Roman</label>
+                  <select v-model="selectedChordRoman" id="chord-roman-filter">
+                    <option :value="null">Any</option>
+                    <option v-for="romanNumeral in romalNumeralChoices" :value="romanNumeral">{{ romanNumeral }}</option>
+                  </select>
+                </div>
+                <div>
+                  <label for="chord-type-filter">Type</label>
+                  <select v-model="selectedChordType" id="chord-type-filter">
+                    <option :value="null">Any</option>
+                    <option v-for="chordType in chordTypes" :value="chordType">
+                      {{ chordType }}
+                    </option>
+                  </select>
+                </div>
+              </div>
               <select v-model="selectedChord">
-                <option v-for="chord in chordChoicesByTotalScore" :value="chord">{{ chord.chord.toString() }} {{ chord.inversion }} {{ chord.doubling }}</option>
+                <option v-for="chord in filteredChordChoicesByTotalScore" :value="chord">
+                  {{ chord.chord.toString() }} {{ chord.inversion }} {{ chord.doubling }} : {{ chord.totalScore }}
+                </option>
               </select>
+              <div v-if="selectedChord">
+                <div v-for="problem in ((selectedChord.selfProblem || {}).problems || {})">
+                  <div v-for="problemValue in problem">
+                    <p>{{ problemValue.comment }}: {{ problemValue.value }}</p>
+                  </div>
+                </div>
+                <div v-for="problem in ((selectedChord.prevProblem || {}).problems || {})">
+                  <div v-for="problemValue in problem">
+                    <p>{{ problemValue.comment }}: {{ problemValue.value }}</p>
+                  </div>
+                </div>
+                <div v-for="problem in ((selectedChord.nextProblem || {}).problems || {})">
+                  <div v-for="problemValue in problem">
+                    <p>{{ problemValue.comment }}: {{ problemValue.value }}</p>
+                  </div>
+                </div>
+              </div>
               <button @click="saveChord()">OK</button>
             </div>
             <div v-else class="chord">
@@ -77,9 +134,11 @@
           </div>
         </div>
       </div>
-      <button id="btn-play">PLAY</button>
-      <button id="btn-pause">PAUSE</button>
-      <button id="btn-stop">STOP</button>
+      <div>
+        <button id="btn-play">PLAY</button>
+        <button id="btn-pause">PAUSE</button>
+        <button id="btn-stop">STOP</button>
+      </div>
     </div>
 </body>
 <script>
@@ -98,6 +157,8 @@ createApp({
       editingChord: -1,
       chordChoices: [],
       selectedChordRoot: null,
+      selectedChordRoman: null,
+      selectedChordType: null,
       selectedChord: null,
     }
   },
@@ -130,6 +191,12 @@ createApp({
       }
       return Array.from(ret);
     },
+    romalNumeralChoices() {
+      return ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII']  // TODO
+    },
+    chordTypes() {
+      return window.chordTypes;
+    },
     chordInversionsAndDoublings() {
       const ret = {};
       for (let i = 0; i < this.chordChoices.length; i++) {
@@ -146,8 +213,27 @@ createApp({
 
       return ret;
     },
-    chordChoicesByTotalScore() {
-      return this.chordChoices.sort((a, b) => {
+    filteredChordChoices() {
+      let ret = this.chordChoices;
+      if (this.selectedChordRoot) {
+        ret = ret.filter((chord) => {
+          return chord.chord.notes[0].pitchName() == this.selectedChordRoot;
+        });
+      }
+      if (this.selectedChordRoman) {
+        ret = ret.filter((chord) => {
+          return chord.numeral == this.selectedChordRoman;
+        });
+      }
+      if (this.selectedChordType) {
+        ret = ret.filter((chord) => {
+          return chord.chord.chordType == this.selectedChordType;
+        });
+      }
+      return ret;
+    },
+    filteredChordChoicesByTotalScore() {
+      return this.filteredChordChoices.sort((a, b) => {
         return a.totalScore - b.totalScore;
       });
     },
@@ -207,6 +293,16 @@ createApp({
     },
   },
   watch: {
+    chordChoices() {
+      if (!this.selectedChord) {
+        this.selectedChord = this.chordChoices[0];
+      }
+    },
+    selectedChordRoot() {
+      if (this.selectedChordRoot) {
+        this.selectedChord = this.chordInversionsAndDoublings[this.selectedChordRoot][0];
+      }
+    },
     melodyText(newValue) {
       const newNotes = newValue.split("")
       if (this.melody.length < newNotes.length) {

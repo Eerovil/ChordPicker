@@ -142,9 +142,6 @@ export const chordChoiceToDivisionedNotes = (chordChoice: ChordChoice, division:
         if (melodyNote) {
             if (part1Note.gTone > melodyNote.note.gTone) {
                 score -= 1000;
-                console.log("Melody note is over: ", melodyNote.note.toString(), "part 1 note is", part1Note.toString())
-            } else {
-                console.log("Melody note is", melodyNote.note.toString(), "part 1 note is", part1Note.toString())
             }
         }
         if (prevPart1Note) {
@@ -186,7 +183,6 @@ export const chordChoiceToDivisionedNotes = (chordChoice: ChordChoice, division:
     }
 
     const bestPermutationNotes = permutations[bestPermutation];
-    console.log("Best permutation is", bestPermutationNotes, "score", bestPermutationScore)
 
     let part1Note = chord.notes[bestPermutationNotes[0]].copy();
     if (!part1Note) {
@@ -241,5 +237,4 @@ export const chordChoiceToDivisionedNotes = (chordChoice: ChordChoice, division:
             tension: 0,
         })
     }
-    console.log("divisionedNotes:", divisionedNotes[division])
 }

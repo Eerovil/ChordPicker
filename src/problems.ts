@@ -10,6 +10,8 @@ export const getProblemsBetweenChords = (prevChord: ChordChoice, nextChord: Chor
         return ret;
     }
 
+    const melodyExists = (divisionedNotes[nextChord.division] || []).filter(rn => rn.partIndex == 0).length > 0;
+
     const fakeDivisionedNotes = {
         // Add melody to divisionednotes
         [prevChord.division]: (divisionedNotes[prevChord.division] || []).filter(rn => rn.partIndex == 0),
@@ -38,16 +40,34 @@ export const getProblemsBetweenChords = (prevChord: ChordChoice, nextChord: Chor
     const part1Distance = Math.abs(globalSemitone(prevNotes[1].note) - globalSemitone(nextNotes[1].note))
     const part2Distance = Math.abs(globalSemitone(prevNotes[2].note) - globalSemitone(nextNotes[2].note))
 
-    ret.problems.voiceDistance.push({
-        value: (part1Distance) * 3,
-        type: "voiceDistance",
-        comment: "part1Distance"
-    });
-    ret.problems.voiceDistance.push({
-        value: (part2Distance) * 3,
-        type: "voiceDistance",
-        comment: "part2Distance"
-    });
+    if (part1Distance > 0) {
+        ret.problems.voiceDistance.push({
+            value: (part1Distance),
+            type: "voiceDistance",
+            slug: "part1Distance",
+            comment: "part1Distance"
+        });
+    }
+    if (part2Distance > 0) {
+        ret.problems.voiceDistance.push({
+            value: (part2Distance),
+            type: "voiceDistance",
+            slug: "part2Distance",
+            comment: "part2Distance"
+        });
+    }
+
+    if (!melodyExists) {
+        const part0Distance = Math.abs(globalSemitone(prevNotes[0].note) - globalSemitone(nextNotes[0].note))
+        if (part0Distance > 0) {
+            ret.problems.voiceDistance.push({
+                value: part0Distance,
+                type: "voiceDistance",
+                slug: "part0Distance",
+                comment: "part0Distance"
+            });
+        }
+    }
 
     if (part1Distance > 1) {
         const part1Interval = getRP(prevNotes[1].note.pitch, nextNotes[1].note.pitch);
@@ -74,11 +94,14 @@ export const getProblemsBetweenChords = (prevChord: ChordChoice, nextChord: Chor
 
     const part3Distance = Math.abs(globalSemitone(prevNotes[3].note) - globalSemitone(nextNotes[3].note))
 
-    ret.problems.voiceDistance.push({
-        value: part3Distance,
-        type: "voiceDistance",
-        comment: "part3Distance"
-    });
+    if (part3Distance > 0) {
+        ret.problems.voiceDistance.push({
+            value: part3Distance,
+            type: "voiceDistance",
+            slug: "part3Distance",
+            comment: "part3Distance"
+        });
+    }
 
     return ret;
 };

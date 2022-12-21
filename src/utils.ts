@@ -393,6 +393,7 @@ export type ChordProblemType = "voiceDistance" | "badInterval" | "chordProgressi
 
 export type ChordProblemValue = {
     type: ChordProblemType,
+    slug?: string,
     value: number,
     comment: string,
 }
@@ -417,7 +418,36 @@ export class ChordProblem {
     }
     get totalScore() {
         let score = 0;
+        const handledProblems = new Set();
+
+        // voice distance is a bit special
+        if (this.problems.voiceDistance.length > 0) {
+            for (const problem of this.problems.voiceDistance) {
+                const slug = problem.slug || "";
+                if (slug == 'part0Distance') {
+                    // This means that melody is not given.
+                    // Still, jumps in the melody are quite OK
+                    score += problem.value;
+                } else if (['part1Distance', 'part2Distance'].includes(slug)) {
+                    // Inner voices shouldn't jump too much
+                    if (problem.value <= 2) {
+                        // Step wise motion is OK
+                        score += problem.value;
+                    } else {
+                        score += problem.value * 3;
+                    }
+                } else if (['part3Distance'].includes(slug)) {
+                    // Bass can jump around
+                    score += problem.value;
+                }
+            }
+            handledProblems.add("voiceDistance");
+        }
+
         for (const key in this.problems) {
+            if (handledProblems.has(key)) {
+                continue;
+            }
             score += this.getScore(key as ChordProblemType);
         }
         return score;

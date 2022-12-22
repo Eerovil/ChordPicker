@@ -38,6 +38,7 @@ const doublingRules = (rulesParams: RulesParams) => {
         const leadingTone = scale.leadingTone;
         const leadingToneIndex = chord.notes.findIndex(note => equalPitch(note.pitch, leadingTone));
         const leadingToneIsDoubled = doubling.filter(i => i == leadingToneIndex).length > 1;
+        console.log("chord: ", chord.toString(), " leadingTone: ", leadingTone, " leadingToneIndex: ", leadingToneIndex, " leadingToneIsDoubled: ", leadingToneIsDoubled)
 
         if (leadingToneIsDoubled) {
             problems.problems.doubling.push({
@@ -49,16 +50,76 @@ const doublingRules = (rulesParams: RulesParams) => {
         }
     }
 
-    if (prevChord && prevChord.chord && prevNotes && prevNotes.length > 0) {
-        const prevScale = prevNotes[0].scale;
-        secondInversion(prevChord.chord, prevChord.doubling);
-        leadingTone(prevChord.chord, prevChord.doubling, prevScale);
+    const seventhOfChord = (chord: Chord, doubling: Array<number>) => {
+        if (chord.notes.length == 4) {
+            const seventhInterval = getRP(chord.notes[0].pitch, chord.notes[3].pitch);
+            const seventhIndex = chord.notes.findIndex(note => equalPitch(note.pitch, chord.notes[3].pitch));
+            const seventhIsDoubled = doubling.filter(i => i == seventhIndex).length > 1;
+            if (seventhIsDoubled) {
+                if (seventhInterval.degree == 6 && seventhInterval.sharp == 0) {
+                    // Major seventh
+                    problems.problems.doubling.push({
+                        type: "doubling",
+                        slug: "major-seventh",
+                        comment: "Major seventh should not be doubled",
+                        value: 10,
+                    });
+                }
+                else if (seventhInterval.degree == 6 && seventhInterval.sharp == -1) {
+                    // Minor seventh
+                    problems.problems.doubling.push({
+                        type: "doubling",
+                        slug: "minor-seventh",
+                        comment: "Minor seventh should not be doubled",
+                        value: 10,
+                    });
+                }
+                else {
+                    problems.problems.doubling.push({
+                        type: "doubling",
+                        slug: "seventh",
+                        comment: "seventh should not be doubled",
+                        value: 10,
+                    });
+                }
+            }
+        }
     }
 
-    if (nextChord && nextChord.chord && nextNotes && nextNotes.length > 0) {
-        const nextScale = nextNotes[0].scale;
-        secondInversion(nextChord.chord, nextChord.doubling);
-        leadingTone(nextChord.chord, nextChord.doubling, nextScale);
+    const doublePrimaryDegreesOfScale = (chord: Chord, doubling: Array<number>, scale: Scale) => {
+        const primaryDegrees = [scale.pitches[0], scale.pitches[3], scale.pitches[4]];
+        const primaryDegreeIndexes = chord.notes.map(note => primaryDegrees.findIndex(pitch => equalPitch(note.pitch, pitch)));
+        if (primaryDegreeIndexes.filter(i => i != -1).length == 0) {
+            return;
+        }
+        let doublingOK = false;
+        for (const chordIndex of primaryDegreeIndexes.filter(i => i != -1)) {
+            if (doubling.filter(i => i == chordIndex).length > 1) {
+                doublingOK = true;
+                break;
+            }
+        }
+        if (!doublingOK) {
+            problems.problems.doubling.push({
+                type: "doubling",
+                slug: "primary-degree",
+                comment: "Primary degree of scale should be doubled",
+                value: 10,
+            });
+        }
+    }
+
+    if (prevChord && prevChord.chord && prevNotes && prevNotes.length > 0) {
+        const prevScale = prevNotes[0].scale;
+
+    } else {
+        if (nextChord && nextChord.chord && nextNotes && nextNotes.length > 0) {
+            const nextScale = nextNotes[0].scale;
+            secondInversion(nextChord.chord, nextChord.doubling);
+            leadingTone(nextChord.chord, nextChord.doubling, nextScale);
+            seventhOfChord(nextChord.chord, nextChord.doubling);
+            doublePrimaryDegreesOfScale(nextChord.chord, nextChord.doubling, nextScale);
+        }
     }
 }
 
@@ -195,6 +256,7 @@ export const getChordProblem = (chord: ChordChoice, divisionedNotes: DivisionedR
     const part1Note = richNotes.filter(rn => rn.partIndex == 1)[0];
     const part2Note = richNotes.filter(rn => rn.partIndex == 2)[0];
     const part3Note = richNotes.filter(rn => rn.partIndex == 3)[0];
+    const richNotesArr = [part0Note, part1Note, part2Note, part3Note];
     ret.notes = [part0Note.note, part1Note.note, part2Note.note, part3Note.note];
     const edgesDistance = Math.abs(globalSemitone(part0Note.note) - globalSemitone(part3Note.note));
     if (edgesDistance % 12 == 1) {
@@ -243,6 +305,15 @@ export const getChordProblem = (chord: ChordChoice, divisionedNotes: DivisionedR
             comment: "part2Note is lower than part3Note"
         });
     }
+
+    doublingRules({
+        prevChord: chord,
+        prevNotes: richNotesArr,
+
+        problems: ret,
+        params,
+    });
+
 
     return ret;
 }

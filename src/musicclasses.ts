@@ -28,18 +28,18 @@ export class Scale {
     }
 
     get leadingTone(): Pitch {
-        const degreeSix = this.pitches[5];
+        const degreeSeven = this.pitches[6];
         const ret = {
-            degree: degreeSix.degree,
-            sharp: degreeSix.sharp,
+            degree: degreeSeven.degree,
+            sharp: degreeSeven.sharp,
         }
-        const degreeSixSemitoneDistance = semitoneDistance(
-            pitchToSemitone(degreeSix),
+        const degreeSevenSemitoneDistance = semitoneDistance(
+            pitchToSemitone(degreeSeven),
             pitchToSemitone(this.root)
         );
 
-        if (degreeSixSemitoneDistance > 1) {
-            ret.sharp += degreeSixSemitoneDistance - 1;
+        if (degreeSevenSemitoneDistance > 1) {
+            ret.sharp += degreeSevenSemitoneDistance - 1;
         }
         return ret;
     }

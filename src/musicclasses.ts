@@ -1,5 +1,5 @@
 import { allPitches, chordTemplates, scaleTemplates } from "./musictemplates";
-import { getRP, pitchNameToPitch, PitchPlusRP, pitchString, pitchToSemitone } from "./utils";
+import { getRP, pitchNameToPitch, PitchPlusRP, pitchString, pitchToSemitone, semitoneDistance } from "./utils";
 
 
 export type Pitch = {
@@ -25,6 +25,23 @@ export class Scale {
         const template = scaleTemplates[this.templateSlug];
         if (template == null) throw new Error("Invalid scale template " + this.templateSlug);
         return template.map(p => PitchPlusRP(this.root, p));
+    }
+
+    get leadingTone(): Pitch {
+        const degreeSix = this.pitches[5];
+        const ret = {
+            degree: degreeSix.degree,
+            sharp: degreeSix.sharp,
+        }
+        const degreeSixSemitoneDistance = semitoneDistance(
+            pitchToSemitone(degreeSix),
+            pitchToSemitone(this.root)
+        );
+
+        if (degreeSixSemitoneDistance > 1) {
+            ret.sharp += degreeSixSemitoneDistance - 1;
+        }
+        return ret;
     }
 
     public equals(other: Scale) {

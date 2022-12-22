@@ -1,15 +1,15 @@
 import { chordChoiceToDivisionedNotes } from "./chordchoicetonotes";
 import { Chord, Scale } from "./musicclasses";
 import { MainMusicParams } from "./params";
-import { ChordChoice, RichNote, ChordProblem, DivisionedRichnotes, getRP, globalSemitone, relativePitchType } from "./utils";
+import { ChordChoice, RichNote, ChordProblem, DivisionedRichnotes, getRP, globalSemitone, relativePitchType, equalPitch } from "./utils";
 
 
 type RulesParams = {
     problems: ChordProblem,
-    prevChord: ChordChoice,
-    prevNotes: Array<RichNote>,
-    nextChord: ChordChoice,
-    nextNotes: Array<RichNote>,
+    prevChord?: ChordChoice,
+    prevNotes?: Array<RichNote>,
+    nextChord?: ChordChoice,
+    nextNotes?: Array<RichNote>,
     params: MainMusicParams,
 }
 
@@ -35,7 +35,30 @@ const doublingRules = (rulesParams: RulesParams) => {
     }
 
     const leadingTone = (chord: Chord, doubling: Array<number>, scale: Scale) => {
+        const leadingTone = scale.leadingTone;
+        const leadingToneIndex = chord.notes.findIndex(note => equalPitch(note.pitch, leadingTone));
+        const leadingToneIsDoubled = doubling.filter(i => i == leadingToneIndex).length > 1;
 
+        if (leadingToneIsDoubled) {
+            problems.problems.doubling.push({
+                type: "doubling",
+                slug: "leading-tone",
+                comment: "Leading tone should not be doubled",
+                value: 10,
+            });
+        }
+    }
+
+    if (prevChord && prevChord.chord && prevNotes && prevNotes.length > 0) {
+        const prevScale = prevNotes[0].scale;
+        secondInversion(prevChord.chord, prevChord.doubling);
+        leadingTone(prevChord.chord, prevChord.doubling, prevScale);
+    }
+
+    if (nextChord && nextChord.chord && nextNotes && nextNotes.length > 0) {
+        const nextScale = nextNotes[0].scale;
+        secondInversion(nextChord.chord, nextChord.doubling);
+        leadingTone(nextChord.chord, nextChord.doubling, nextScale);
     }
 }
 
@@ -140,6 +163,15 @@ export const getProblemsBetweenChords = (prevChord: ChordChoice, nextChord: Chor
             comment: "part3Distance"
         });
     }
+
+    doublingRules({
+        prevChord,
+        nextChord,
+        prevNotes,
+        nextNotes,
+        problems: ret,
+        params,
+    });
 
     return ret;
 };

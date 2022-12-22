@@ -333,3 +333,7 @@ export const nonEnharmonicPitch = (semitone: number, chord: Chord): Pitch => {
 
     return ret;
 }
+
+export const equalPitch = (pitch1: Pitch, pitch2: Pitch): boolean => {
+    return pitch1.degree == pitch2.degree && pitch1.sharp == pitch2.sharp;
+}

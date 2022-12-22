@@ -115,7 +115,7 @@ export const chordChoiceToDivisionedNotes = (chordChoice: ChordChoice, division:
             score -= 100;
         }
         if (prevPart2Note) {
-            score -= Math.min(
+            score -= Math.max(
                 0,
                 Math.abs(globalSemitone(part2Note) - globalSemitone(prevPart2Note.note)) - 2
             )
@@ -145,7 +145,7 @@ export const chordChoiceToDivisionedNotes = (chordChoice: ChordChoice, division:
             }
         }
         if (prevPart1Note) {
-            score -= Math.min(
+            score -= Math.max(
                 0,
                 Math.abs(globalSemitone(part1Note) - globalSemitone(prevPart1Note.note)) - 2
             )

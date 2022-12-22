@@ -257,6 +257,33 @@ export class Chord {
     static fromObject(obj: any) {
         return new Chord(obj.root, obj.chordType);
     }
+    public getChordDegree(root: Pitch) {
+        // Get what this chord would be in the given key
+        const intervalToRoot = getRP(root, this.root);
+        const degreeToNumeral = [
+            "I", "II", "III", "IV", "V", "VI", "VII"
+        ]
+        let ret = degreeToNumeral[intervalToRoot.degree];
+        if (intervalToRoot.sharp > 0) {
+            ret = "#" + ret;
+        }
+        if (intervalToRoot.sharp < 0) {
+            ret = "b" + ret;
+        }
+        if (!(this.chordType.includes("maj"))) {
+            ret = ret.toLowerCase();
+        }
+        if (this.chordType.includes("dim")) {
+            ret = ret + "°";
+        }
+        if (this.chordType.includes("7")) {
+            ret = ret + "7";
+        }
+        return ret;
+    }
+    get defaultDegree() {
+        return this.getChordDegree(allPitches[0]);
+    }
 }
 
 
@@ -571,14 +598,18 @@ export const PitchPlusRP = (pitch: Pitch, relativePitch: RelativePitch): Pitch =
     ret.sharp += targetSemitone - pitchToSemitone(ret)
 
     return ret;
-
 }
 
 export const getRP = (pitch1: Pitch, pitch2: Pitch): RelativePitch => {
-    return {
+    const semitone1 = pitchToSemitone(pitch1);
+    const semitone2 = pitchToSemitone(pitch2);
+    let ret = {
         degree: (pitch2.degree - pitch1.degree + 7) % 7,
-        sharp: pitch2.sharp - pitch1.sharp,
+        sharp: pitch2.sharp,
     }
+    ret.sharp += (semitone2 - semitone1) - pitchToSemitone(ret)
+
+    return ret;
 }
 
 const degreeNames = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];

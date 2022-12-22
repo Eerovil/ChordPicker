@@ -75,6 +75,12 @@
             <div v-if="editingChord == chordSlot" class="editing-chord">
               <div class="chord-filters">
                 <div>
+                  <label for="chord-key-filter">Key</label>
+                  <select v-model="selectedChordKey" id="chord-key-filter">
+                    <option v-for="rootPitchName in chordRootChoices" :value="rootPitchName">{{ rootPitchName }}</option>
+                  </select>
+                </div>
+                <div>
                   <label for="chord-root-filter">Root</label>
                   <select v-model="selectedChordRoot" id="chord-root-filter">
                     <option :value="null">Any</option>
@@ -158,6 +164,7 @@ createApp({
       chords: {},
       editingChord: -1,
       chordChoices: [],
+      selectedChordKey: 'C',
       selectedChordRoot: null,
       selectedChordRoman: null,
       selectedChordType: null,
@@ -172,6 +179,7 @@ createApp({
       this.chords[key].chord = window.Chord.fromObject(this.chords[key].chord);
       this.chords[key].notes = (this.chords[key].notes || []).map(note => window.Note.fromObject(note));
     }
+    console.log(this.chords);
     this.melody = JSON.parse(window.localStorage.getItem('melody') || "[]") || [];
     this.melodyText = window.localStorage.getItem('melodyText') || "";
   },
@@ -199,10 +207,15 @@ createApp({
         const rootName = chord.chord.notes[0].pitchName();
         ret.add(rootName);
       }
-      return Array.from(ret);
+      return Array.from(ret).sort();
     },
     romalNumeralChoices() {
-      return ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII']  // TODO
+      const ret = new Set();
+      for (let i = 0; i < this.chordChoices.length; i++) {
+        const chord = this.chordChoices[i];
+        ret.add(chord.chord.getChordDegree(this.selectedChordKeyPitch));
+      }
+      return Array.from(ret).sort();
     },
     chordTypes() {
       return window.chordTypes;
@@ -232,7 +245,7 @@ createApp({
       }
       if (this.selectedChordRoman) {
         ret = ret.filter((chord) => {
-          return chord.numeral == this.selectedChordRoman;
+          return chord.chord.getChordDegree(this.selectedChordKeyPitch) == this.selectedChordRoman;
         });
       }
       if (this.selectedChordType) {
@@ -252,6 +265,9 @@ createApp({
       return this.chordChoices.sort((a, b) => {
         return a.totalScore - b.totalScore;
       });
+    },
+    selectedChordKeyPitch() {
+      return (new window.Note(this.selectedChordKey)).pitch;
     }
   },
   methods: {
@@ -300,9 +316,12 @@ createApp({
       this.editingChord = index;
       this.chordChoices = await window.getChordChoices(this.melody, index, prevChord, nextChord, this.params);
       if (this.chords[index]) {
-        this.selectedChordRoot = this.chords[index].chord.notes[0].pitchName();
         this.selectedChord = this.chords[index];
       }
+      this.selectedChordKey = "C";
+      this.selectedChordRoot = null;
+      this.selectedChordRoman = null;
+      this.selectedChordType = null;
     },
     saveChord() {
       this.chords[this.editingChord] = this.selectedChord;

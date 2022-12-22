@@ -1,6 +1,44 @@
 import { chordChoiceToDivisionedNotes } from "./chordchoicetonotes";
+import { Chord, Scale } from "./musicclasses";
 import { MainMusicParams } from "./params";
-import { ChordChoice, ChordProblem, DivisionedRichnotes, getRP, globalSemitone, gToneString, relativePitchType } from "./utils";
+import { ChordChoice, RichNote, ChordProblem, DivisionedRichnotes, getRP, globalSemitone, relativePitchType } from "./utils";
+
+
+type RulesParams = {
+    problems: ChordProblem,
+    prevChord: ChordChoice,
+    prevNotes: Array<RichNote>,
+    nextChord: ChordChoice,
+    nextNotes: Array<RichNote>,
+    params: MainMusicParams,
+}
+
+
+const doublingRules = (rulesParams: RulesParams) => {
+    const { problems, prevChord, prevNotes, nextChord, nextNotes, params } = rulesParams;
+
+    // Check 64 (Second inversion triad)
+    const secondInversion = (chord: Chord, doubling: Array<number>) => {
+        if (chord.notes.length == 3) {
+            const is64 = doubling[0] == 2;
+            // Fifth should be doubled
+            const fifthIsDoubled = doubling.filter(i => i == 2).length > 1;
+            if (is64 && !fifthIsDoubled) {
+                problems.problems.doubling.push({
+                    type: "doubling",
+                    slug: "64",
+                    comment: "Second inversion triad should have fifth doubled",
+                    value: 5,
+                });
+            }
+        }
+    }
+
+    const leadingTone = (chord: Chord, doubling: Array<number>, scale: Scale) => {
+
+    }
+}
+
 
 export const getProblemsBetweenChords = (prevChord: ChordChoice, nextChord: ChordChoice, divisionedNotes: DivisionedRichnotes, params: MainMusicParams) : ChordProblem => {
     const ret = new ChordProblem();

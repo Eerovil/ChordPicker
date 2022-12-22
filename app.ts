@@ -1,4 +1,3 @@
-import { buildTables, Scale } from "musictheoryjs";
 import { ChordGenerator, chordInversionsAndDoublings } from "./src/allchords";
 import { chordChoiceToDivisionedNotes } from "./src/chordchoicetonotes";
 import { cleanDivisionedNotes } from "./src/cleandivisionedNotes";
@@ -7,12 +6,12 @@ import { toXml } from "./src/musicxmlgen";
 import { MainMusicParams } from "./src/params";
 import { loadPlayer, renderMusic } from "./src/player"
 import { getChordProblem, getProblemsBetweenChords } from "./src/problems";
-import { Chord, Note, ChordChoice, ChordChoicesByDivision, chordTemplates, DivisionedRichnotes, Melody } from "./src/utils"
-
-buildTables();
+import { ChordChoice, ChordChoicesByDivision, DivisionedRichnotes, Melody } from "./src/utils"
+import { Chord, Note, Scale } from "./src/musicclasses";
+import { allPitches, chordTemplates } from "./src/musictemplates";
 
 (window as any).MainMusicParams = MainMusicParams;
-(window as any).CMAJ = new Scale('Cmaj');
+(window as any).CMAJ = new Scale(allPitches[0], 'major');
 (window as any).chordTypes = Object.keys(chordTemplates);
 (window as any).Chord = Chord;
 (window as any).Note = Note;

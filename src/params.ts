@@ -1,4 +1,5 @@
-import { Scale } from "musictheoryjs";
+import { Scale } from "./musicclasses";
+import { allPitches } from "./musictemplates";
 
 export class MainMusicParams {
     beatsPerBar: number = 4;
@@ -32,6 +33,6 @@ export class MainMusicParams {
         ];
 
     getScale(): Scale {
-        return new Scale('Cmaj');
+        return new Scale(allPitches[0], 'major');
     }
 }

@@ -1,8 +1,8 @@
-import { Scale, ScaleTemplates } from 'musictheoryjs';
-
 import builder from 'xmlbuilder';
+import { Note, Scale, Chord } from './musicclasses';
+import { allPitches } from './musictemplates';
 import { MainMusicParams } from './params';
-import { Chord, Note, DivisionedRichnotes, globalSemitone, RichNote } from './utils';
+import { DivisionedRichnotes, globalSemitone, RichNote } from './utils';
 
 const BEAT_LENGTH = 12
 
@@ -14,11 +14,7 @@ const scaleToScale = (scale: any) => {
   if (scale instanceof Scale) {
     return scale;
   }
-  return new Scale({
-    key: scale._key,
-    octave: scale._octave,
-    template: scale._template,
-  })
+  return Scale.fromObject(scale)
 }
 
 const noteToNote = (note: any) => {
@@ -42,33 +38,6 @@ const chordToChord = (chord: any) => {
     chord.root,
     chord.chordType,
   );
-}
-
-function semitoneToPitch(semitone: number, scale: Scale, direction: string = "sharp"): { noteName: string, alter: number } {
-  scale = scaleToScale(scale);
-  for (const note of scale.notes) {
-    if (note.semitone === semitone) {
-      return {
-        noteName: note.toString().substring(0, 1),
-        alter: 0,
-      };
-    }
-  }
-  for (const note of scale.notes) {
-    if (direction == "flat" && note.semitone === semitone + 1) {
-      return {
-        noteName: note.toString().substring(0, 1),
-        alter: -1,
-      };
-    }
-    if (direction == "sharp" && note.semitone === semitone - 1) {
-      return {
-        noteName: note.toString().substring(0, 1),
-        alter: 1,
-      };
-    }
-  }
-  throw new Error("Could not find note for semitone " + semitone);
 }
 
 
@@ -164,48 +133,7 @@ function addRichNoteToMeasure(richNote: RichNote, measure: builder.XMLElement, s
   let lyric = richNote.tension && staff == 0 ? { 'text': { '#text': `${richNote.tension}` } } : undefined
 
   if (richNote.scale && richNote.chord && staff == 1) {
-    const roman = richNote.scale.notes.map(n => n.semitone).indexOf(richNote.chord.notes[0].semitone);
-    const numberToRoman = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII'];
-    let romanNumeral = numberToRoman[roman];
-    if (romanNumeral == undefined) {
-      romanNumeral = '';
-    }
-    if (richNote.chord.chordType.includes('min')) {
-      romanNumeral = romanNumeral.toLowerCase();
-    }
-    if (richNote.chord.chordType.includes('dim')) {
-      romanNumeral = romanNumeral.toLowerCase() + '°';
-    }
-    if (richNote.inversionName) {
-      if (richNote.chord.chordType.includes('7')) {
-        if (richNote.inversionName.startsWith('first')) {
-          romanNumeral = romanNumeral + '65';
-        }
-        else if (richNote.inversionName.startsWith('second')) {
-          romanNumeral = romanNumeral + '43';
-        }
-        else if (richNote.inversionName.startsWith('third')) {
-          romanNumeral = romanNumeral + '42';
-        }
-        else {
-          romanNumeral = romanNumeral + '7';
-        }
-      } else {
-        if (richNote.inversionName.startsWith('first')) {
-          romanNumeral = romanNumeral + '6';
-        }
-        if (richNote.inversionName.startsWith('second')) {
-          romanNumeral = romanNumeral + '64';
-        }
-      }
-    }
-    if (richNote.originalScale && richNote.scale.notes[0].semitone != richNote.originalScale.notes[0].semitone) {
-      const currentScaleScaleIndex = richNote.originalScale.notes.map(n => n.semitone).indexOf(richNote.scale.notes[0].semitone);
-      if (currentScaleScaleIndex >= 0) {
-        romanNumeral = romanNumeral + '/' + numberToRoman[currentScaleScaleIndex];
-      }
-    }
-
+    const romanNumeral = richNote.chord.getChordDegree(richNote.scale.root);
     lyric = { 'text': { '#text': romanNumeral } }
   }
 
@@ -381,35 +309,10 @@ const getScaleSharpCount = (scale: Scale) => {
   // Scale objects must be recreated as they might be plain objects
   scale = scaleToScale(scale);
   let sharpCount = 0;
-  let semitone = scale.key;
-  if (scale.toString().includes("Minor")) {
-    semitone += 3;
-    semitone = semitone % 12;
+  for (const pitch of scale.pitches) {
+    sharpCount += pitch.sharp;
   }
-  if (semitone == 11) {
-    return 5;
-  }
-  if (semitone == 6) {
-    return 6;
-  }
-  const baseTones = [0, 2, 4, 5, 7, 9, 11];
-  if (semitone == 0 || semitone == 2 || semitone == 4 || semitone == 7 || semitone == 9) {
-    // Add sharps to the scale
-    for (const note of scale.notes) {
-      if (!baseTones.includes(note.semitone)) {
-        sharpCount++;
-      }
-    }
-    return sharpCount;
-  } else {
-    // Add flats to the scale
-    for (const note of scale.notes) {
-      if (!baseTones.includes(note.semitone)) {
-        sharpCount--;
-      }
-    }
-    return sharpCount;
-  }
+  return sharpCount;
 }
 
 
@@ -613,7 +516,7 @@ export function toXml(divisionedNotes: DivisionedRichnotes, mainParams: MainMusi
 
   const maxDivision = Math.max(...Object.keys(divisionedNotes).map((k) => parseInt(k)))
   let division = 0;
-  let currentScale = new Scale({ key: 0 });
+  let currentScale = new Scale(allPitches[0], 'major');
   while (division <= maxDivision) {
     let keyChange;
     if (

@@ -1,5 +1,7 @@
+import { Chord, Pitch } from "./musicclasses";
+import { allPitches, chordTemplates } from "./musictemplates";
 import { MainMusicParams } from "./params";
-import { allPitches, Chord, ChordChoice, chordTemplates, Pitch } from "./utils";
+import { ChordChoice } from "./utils";
 
 export class ChordGenerator {
     private chordTypes: string[];

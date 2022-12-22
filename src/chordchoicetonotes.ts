@@ -1,6 +1,6 @@
-import { Scale } from "musictheoryjs";
 import { MainMusicParams } from "./params"
 import { BEAT_LENGTH, ChordChoice, DivisionedRichnotes, getRP, globalSemitone, relativePitchType, startingNotes } from "./utils"
+import { Scale } from "./musicclasses";
 
 export const chordChoiceToDivisionedNotes = (chordChoice: ChordChoice, division: number, divisionedNotes: DivisionedRichnotes, params: MainMusicParams) => {
     const chord = chordChoice.chord;

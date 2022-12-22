@@ -1,7 +1,6 @@
 {
   "dependencies": {
     "http-server": "^14.1.1",
-    "musictheoryjs": "^2.0.2",
     "opensheetmusicdisplay": "^1.6.0",
     "osmd-audio-player": "^0.7.0",
     "webpack": "^5.74.0",

@@ -1,5 +1,6 @@
+import { Note } from "./musicclasses";
 import { MainMusicParams } from "./params";
-import { Chord, Note, DivisionedRichnotes, globalSemitone, Melody, MelodyNote, startingNotes } from "./utils";
+import { DivisionedRichnotes, globalSemitone, Melody, MelodyNote, startingNotes } from "./utils";
 import { BEAT_LENGTH } from "./utils";
 
 export const melodyToRichNotes = (melody: Melody, disivionedRichNotes: DivisionedRichnotes, params: MainMusicParams) => {

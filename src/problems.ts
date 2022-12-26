@@ -134,19 +134,28 @@ const chordProgressionRules = (rulesParams: RulesParams) => {
         return;
     }
     const availableProgressions = progressionChoices(prevChord.chord, prevNotes[0].scale);
-    if (availableProgressions.length > 0) {
-        console.log("availableProgressions from ", prevChord.chord.toString(), ": ", availableProgressions.map(p => p.toString()));
-    } else {
-        console.log("No availableProgressions from ", prevChord.chord.toString());
-    }
+    // if (availableProgressions.length > 0) {
+    //     console.log("availableProgressions from ", prevChord.chord.toString(), ": ", availableProgressions.map(p => p.toString()));
+    // } else {
+    //     console.log("No availableProgressions from ", prevChord.chord.toString());
+    // }
 
-    if (availableProgressions.filter(p => p.toString() == nextChordString).length == 0) {
+    if (availableProgressions.filter(p => p.chord.toString() == nextChordString).length == 0) {
         problems.problems.chordProgression.push({
             type: "chordProgression",
             slug: "not-available",
-            comment: `Chord ${prevChord.chord.toString()} does not have a progression to ${nextChord.chord.toString()}`,
+            comment: `Chord ${prevChord.chord.toString()} does not have a progression to ${nextChordString}`,
             value: 10,
         });
+    } else {
+        for (const prog of availableProgressions.filter(p => p.chord.toString() == nextChordString)) {
+            problems.problems.chordProgression.push({
+                type: "chordProgression",
+                slug: "available",
+                comment: `Chord ${prevChord.chord.toString()} -> ${prog.chord.toString()} (${prog.reason})`,
+                value: 0,
+            });
+        }
     }
 }
 

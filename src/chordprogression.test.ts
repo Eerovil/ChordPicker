@@ -26,6 +26,10 @@ describe('test some chord substitutions', () => {
             'A#dom7',
         ]);
     });
+    test('problem sub', () => {
+        const CMajorScale = new Scale(allPitchesByName['C'], 'major');
+        expect(chordSubstitutions(new Chord(allPitchesByName['C'], 'min'), CMajorScale).map(chord => chord.toString())).toStrictEqual([]);
+    })
 });
 
 
@@ -33,7 +37,7 @@ describe('test chord progressions', () => {
     const CMajorScale = new Scale(allPitchesByName['C'], 'major');
     const diatonicChords = CMajorScale.diatonicTriads;
     expect(diatonicChords[0].toString()).toBe('Cmaj');
-    const choicesFromCmaj = progressionChoices(diatonicChords[0], CMajorScale).map(chord => chord.toString());
+    const choicesFromCmaj = progressionChoices(diatonicChords[0], CMajorScale).map(prog => prog.chord.toString());
 
     test('Basic', () => {
         // Any diatonic chord is there
@@ -65,11 +69,15 @@ describe('test chord progressions', () => {
     test('Tritone subs', () => {
         expect(choicesFromCmaj).toContain('C#dom7');  // Gdom7 tritone sub
     });
+});
 
+describe('test other chord progressions', () => {
+    const CMajorScale = new Scale(allPitchesByName['C'], 'major');
+    const diatonicChords = CMajorScale.diatonicTriads;
 
     test('Progress from V chord', () => {
         const VChord = diatonicChords[4];
-        const choicesFromV = progressionChoices(VChord, CMajorScale).map(chord => chord.toString());
+        const choicesFromV = progressionChoices(VChord, CMajorScale).map(prog => prog.chord.toString());
         expect(choicesFromV.some(c => c == "Cmaj")).toBe(true)
         expect(choicesFromV.some(c => c == "Dmin")).toBe(false)
         expect(choicesFromV.some(c => c == "Emin")).toBe(false)
@@ -82,7 +90,7 @@ describe('test chord progressions', () => {
 
     test('Progress from ii chord', () => {
         const iiChord = diatonicChords[1];
-        const choicesFromii = progressionChoices(iiChord, CMajorScale).map(chord => chord.toString());
+        const choicesFromii = progressionChoices(iiChord, CMajorScale).map(prog => prog.chord.toString());
         expect(choicesFromii.some(c => c == "Cmaj")).toBe(false)
         expect(choicesFromii.some(c => c == "Dmin")).toBe(true)
         expect(choicesFromii.some(c => c == "Emin")).toBe(false)
@@ -94,8 +102,23 @@ describe('test chord progressions', () => {
 
     test('Progress from iv to V/ii', () => {
         const ivChord = diatonicChords[3];
-        const choicesFromiv = progressionChoices(ivChord, CMajorScale).map(chord => chord.toString());
-        expect(choicesFromiv.some(c => c == "Dmin")).toBe(true)
-        expect(choicesFromiv.some(c => c == "Adom7")).toBe(true)  // V/ii
+        const choicesFromiv = progressionChoices(ivChord, CMajorScale)
+        expect(choicesFromiv.some(c => c.chord.toString() == "Dmin")).toBe(true)
+        expect(choicesFromiv.filter(c => c.chord.toString() == "Dmin")[0].reason).toContain("diatonic")
+        expect(choicesFromiv.some(c => c.chord.toString() == "Adom7")).toBe(true)  // V/ii
+    })
+
+    test('Progress from Edim to Cmaj', () => {
+        // This is a secondary dominant: iio/ii -> VII/ii (-> ii)
+        const EdimChord = new Chord('E', 'dim');
+        const choicesFromEdimChord = progressionChoices(EdimChord, CMajorScale).map(prog => prog.chord.toString());
+        expect(choicesFromEdimChord.some(c => c == "Cmaj")).toBe(true)
+    })
+
+    test('Progress from Cmin to Ddim', () => {
+        // This is not a secondary dominant, and should not work
+        const CminChord = new Chord('C', 'min');
+        const choicesFromCminChord = progressionChoices(CminChord, CMajorScale)
+        expect(choicesFromCminChord.some(c => c.chord.toString() == "Ddim")).toBe(false)
     })
 })

@@ -12,6 +12,19 @@ import { equalPitch, anyChromaticNotes, PitchPlusRP, enharmonicPitch } from "./u
         6: ['tonic'],                // vii can go to I
 */
 
+const chordProgressionCache: {[key: string]: Array<ChordProgression>} = {};
+
+
+export type ChordProgression = {
+    chord: Chord,
+    reason: string,
+}
+
+
+const progressionEquals = (a: ChordProgression, b: ChordProgression): boolean => {
+    return a.chord.toString() == b.chord.toString() && a.reason == b.reason;
+}
+
 
 export const chordSubstitutions = (chord: Chord, scale: Scale): Array<Chord> => {
     // For any given chord, return a list of chords that can substitute for it.
@@ -36,8 +49,7 @@ export const chordSubstitutions = (chord: Chord, scale: Scale): Array<Chord> => 
         const tritonePitch = enharmonicPitch(PitchPlusRP(chord.notes[0].pitch, {degree: 3, sharp: 1}), scale);
         ret.push(new Chord(tritonePitch, 'dom7'));
     }
-    console.log("Substitutions for " + chord.name + " are " + ret.map(x => x.name));
-    return ret;
+    return ret.filter(c => c.toString() != chord.toString());
 }
 
 const diatonicProgressionChoices = (chord: Chord, scale: Scale): Array<Chord> => {
@@ -82,18 +94,20 @@ const diatonicProgressionChoices = (chord: Chord, scale: Scale): Array<Chord> =>
     return ret;
 }
 
-export const progressionChoices = (chord: Chord, scale: Scale, passedRecursionHandled: Set<string> | undefined = undefined) : Array<Chord> => {
+export const progressionChoices = (chord: Chord, scale: Scale, passedRecursionHandled: Set<string> | undefined = undefined, originalScale: Scale | undefined = undefined) : Array<ChordProgression> => {
     let recursionHandled = passedRecursionHandled || new Set();
 
-    let initialResults: Array<Chord> = [];
-    if (recursionHandled.has(`${chord.toString()}-${scale.toString()}`)) {
+    let initialResults: Array<ChordProgression> = [];
+    const identifierString = `${chord.toString()}-${scale.toString()}`;
+    if (recursionHandled.has(identifierString)) {
         return initialResults;
     }
 
-    console.log("Checking progression choices for", chord.toString(), "in scale", scale.toString());
-    if (chord.toString() == 'G#dom7') {
-        debugger;
+    if (chordProgressionCache[identifierString] != undefined) {
+        return chordProgressionCache[identifierString];
     }
+
+    console.log("Checking progression choices for", chord.toString(), "in scale", scale.toString());
 
     // The procedure is as follows:
     // First we check what the chord is possibly substituting (a diatonic chord). If so, we use that diatonic chord for progressions.
@@ -104,7 +118,7 @@ export const progressionChoices = (chord: Chord, scale: Scale, passedRecursionHa
 
     if (!anyChromaticNotes(chord.notes, scale)) {
         // We're good, this cannot be a substitution or a secondary chord.
-        initialResults = diatonicProgressionChoices(chord, scale);
+        initialResults = diatonicProgressionChoices(chord, scale).map(chord => ({chord, reason: 'diatonic in ' + scale.toString() }));
     } else {
         // Run this same function for all chords this chord could be substituting.
         const substitutions = chordSubstitutions(chord, scale);
@@ -122,7 +136,11 @@ export const progressionChoices = (chord: Chord, scale: Scale, passedRecursionHa
                 // Run this same function but with the dominant scale.
                 // TODO: Should chromatic notes here be allowed...?
                 if (!anyChromaticNotes(chord.notes, dominantScale)) {
-                    initialResults = initialResults.concat(progressionChoices(chord, dominantScale, recursionHandled));
+                    initialResults = initialResults.concat(
+                        progressionChoices(chord, dominantScale, recursionHandled, scale).map(
+                            prog => {prog.reason += " in scale " + dominantScale.toString(); return prog}
+                        )
+                    );
                 }
             }
         }
@@ -134,7 +152,11 @@ export const progressionChoices = (chord: Chord, scale: Scale, passedRecursionHa
                 const dominantScale = new Scale(PitchPlusRP(chord.root, degree2Interval, false), scaleType);  // 2nd down
                 // Run this same function but with the dominant scale.
                 if (!anyChromaticNotes(chord.notes, dominantScale)) {
-                    initialResults = initialResults.concat(progressionChoices(chord, dominantScale, recursionHandled));
+                    initialResults = initialResults.concat(
+                        progressionChoices(chord, dominantScale, recursionHandled, scale).map(
+                            prog => {prog.reason += " in scale " + dominantScale.toString(); return prog}
+                        )
+                    );
                 }
             }
         }
@@ -147,53 +169,65 @@ export const progressionChoices = (chord: Chord, scale: Scale, passedRecursionHa
                 const dominantScale = new Scale(PitchPlusRP(chord.root, degree7Interval, false), scaleType);  // 7th down
                 // Run this same function but with the dominant scale.
                 if (!anyChromaticNotes(chord.notes, dominantScale)) {
-                    initialResults = initialResults.concat(progressionChoices(chord, dominantScale, recursionHandled));
+                    initialResults = initialResults.concat(
+                        progressionChoices(chord, dominantScale, recursionHandled, scale).map(
+                            prog => {prog.reason += " in scale " + dominantScale.toString(); return prog}
+                        )
+                    );
                 }
             }
         }
-
     }
 
-    initialResults = initialResults.concat(chord);
+    initialResults = initialResults.concat({chord, reason: 'self'});
 
     // Remove duplicates
     const ret = initialResults.filter((chord, index, self) =>
         index === self.findIndex((t) => (
-            t.toString() === chord.toString()
+            progressionEquals(t, chord)
         ))
     );
 
     // Add substitutions
-    let finalResults: Array<Chord> = [...ret];
-    for (const chord of ret) {
-        finalResults = finalResults.concat(chordSubstitutions(chord, scale));
+    let finalResults: Array<ChordProgression> = [...ret];
+    for (const prog of ret) {
+        finalResults = finalResults.concat(chordSubstitutions(prog.chord, scale).map(c => ({
+            chord: c, reason: c.toString() + 'is a substitution of ' + prog.chord.toString() + ' in scale ' + scale.toString()
+        })));
     }
 
     // Add secondary dominants of each diatonic chord
-    const addSecondaryDominants = (chords: Chord[]) => {
+    const addSecondaryDominants = (chords: Chord[], degree: number, of: number, dominantScale: Scale) => {
         for (const chord of chords) {
             if (!anyChromaticNotes(chord.notes, scale)) {
                 // Secondary dominants must have chromatic notes.
                 continue;
             }
-            finalResults.push(chord);
+            const degrees = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII'];
+            finalResults.push({chord, reason: `${chord.toString()} is ${chord.getChordDegree(scale.root)} of ${degrees[of]}`});
         }
     }
 
-    for (const chord of ret) {
-        if (['maj', 'min'].includes(chord.chordType)) {
-            // Make a scale that has this chord as the root/tonic
-            for (const scaleType of ['major', 'harmonicMinor']) {
-                const dominantScale = new Scale(chord.root, scaleType);
-                if (equalPitch(dominantScale.root, scale.root)) {
-                    continue;
+    if (!originalScale || originalScale.equals(scale)) {
+        for (const prog of ret) {
+            if (['maj', 'min'].includes(prog.chord.chordType)) {
+                // Make a scale that has this chord as the root/tonic
+                for (const scaleType of ['major', 'harmonicMinor']) {
+                    const chordDegree = scale.diatonicChordsByDegree.findIndex(chords => chords.some(c => c.toString() == prog.chord.toString()));
+                    const dominantScale = new Scale(prog.chord.root, scaleType);
+                    if (equalPitch(dominantScale.root, scale.root)) {
+                        continue;
+                    }
+                    if (anyChromaticNotes(prog.chord.notes, dominantScale)) {
+                        continue;
+                    }
+                    // V chord
+                    addSecondaryDominants(dominantScale.diatonicChordsByDegree[4], 4, chordDegree, scale);
+                    // ii chord
+                    addSecondaryDominants(dominantScale.diatonicChordsByDegree[1], 1, chordDegree, scale);
+                    // vii chord
+                    addSecondaryDominants(dominantScale.diatonicChordsByDegree[6], 6, chordDegree, scale);
                 }
-                // V chord
-                addSecondaryDominants(dominantScale.diatonicChordsByDegree[4]);
-                // ii chord
-                addSecondaryDominants(dominantScale.diatonicChordsByDegree[1]);
-                // vii chord
-                addSecondaryDominants(dominantScale.diatonicChordsByDegree[6]);
             }
         }
     }
@@ -201,9 +235,11 @@ export const progressionChoices = (chord: Chord, scale: Scale, passedRecursionHa
     // Remove duplicates
     const ret2 = finalResults.filter((chord, index, self) =>
         index === self.findIndex((t) => (
-            t.toString() === chord.toString()
+            progressionEquals(t, chord)
         ))
     );
+
+    chordProgressionCache[identifierString] = ret2;
 
     return ret2
 }

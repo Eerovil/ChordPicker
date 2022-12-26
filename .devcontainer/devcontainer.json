@@ -14,7 +14,8 @@
 		"vscode": {
 			"extensions": [
 				"dbaeumer.vscode-eslint",
-				"GitHub.copilot"
+				"GitHub.copilot",
+				"Orta.vscode-jest"
 			]
 		}
 	}

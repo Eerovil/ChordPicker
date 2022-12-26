@@ -6,7 +6,6 @@
     <title>ChordPicker</title>
     <script>
     </script>
-    <script src="dist/bundle.js"></script>
     <script src="midi.js"></script>
     <style>
       #melodys {
@@ -153,6 +152,7 @@
 
 </script>
 <script>
+  setTimeout(() => {
 const { createApp } = Vue
 
 createApp({
@@ -381,5 +381,22 @@ createApp({
   }
 
 }).mount('#vue-template')
+  }, 400)
+</script>
+
+<script type="text/javascript">
+  function addScript(src) {
+    return new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+
+      s.setAttribute('src', src);
+      s.addEventListener('load', resolve);
+      s.addEventListener('error', reject);
+
+      document.body.appendChild(s);
+    });
+  }
+  // change path to match your file:
+  addScript('dist/bundle.js?v=' + Date.now());
 </script>
 </html>

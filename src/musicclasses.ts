@@ -1,5 +1,5 @@
-import { allPitches, chordTemplates, scaleTemplates } from "./musictemplates";
-import { getRP, pitchNameToPitch, PitchPlusRP, pitchString, pitchToSemitone, semitoneDistance } from "./utils";
+import { allowedScaleRoots, allPitches, chordTemplates, diatonicChordsByScale, scaleTemplates } from "./musictemplates";
+import { anyChromaticNotes, enharmonicPitch, equalPitch, getRP, pitchNameToPitch, PitchPlusRP, pitchString, pitchToSemitone, semitoneDistance } from "./utils";
 
 
 export type Pitch = {
@@ -17,6 +17,19 @@ export class Scale {
     templateSlug: string;
 
     constructor(root: Pitch, templateSlug: string) {
+        let found = false;
+        for (const allowedRoot of allowedScaleRoots) {
+            if (equalPitch(root, allowedRoot)) found = true;
+        }
+        if (!found) {
+            const rootSemitone = pitchToSemitone(root);
+            for (const allowedRoot of allowedScaleRoots) {
+                if (pitchToSemitone(allowedRoot) === rootSemitone) {
+                    root = allowedRoot;
+                    break;
+                }
+            }
+        }
         this.root = root;
         this.templateSlug = templateSlug;
     }
@@ -42,6 +55,54 @@ export class Scale {
             ret.sharp += degreeSevenSemitoneDistance - 1;
         }
         return ret;
+    }
+
+    get diatonicTriads(): Chord[] {
+        const ret = [];
+        let degree = 0;
+        for (const chordTemplateSlug of diatonicChordsByScale[this.templateSlug]) {
+            ret.push(new Chord(this.pitches[degree], chordTemplateSlug));
+            degree++;
+        }
+        return ret;
+    }
+
+    get diatonicChordsByDegree(): Chord[][] {
+        const triads = this.diatonicTriads;
+        const chordsByDegree: Array<Array<Chord>> = [
+            [triads[0]],
+            [triads[1]],
+            [triads[2]],
+            [triads[3]],
+            [triads[4]],
+            [triads[5]],
+            [triads[6]],
+        ]
+        // Add some 7th chords
+        for (const degreeIndex in triads) {
+            const chord = chordsByDegree[degreeIndex][0];
+            const dom7 = new Chord(chord.notes[0].pitch, 'dom7');
+            if (!anyChromaticNotes(dom7.notes, this)) {
+                chordsByDegree[degreeIndex].push(dom7);
+            }
+            const maj7 = new Chord(chord.notes[0].pitch, 'maj7');
+            if (!anyChromaticNotes(maj7.notes, this)) {
+                chordsByDegree[degreeIndex].push(maj7);
+            }
+            const halfDim7 = new Chord(chord.notes[0].pitch, 'dimhalf7');
+            if (!anyChromaticNotes(halfDim7.notes, this)) {
+                chordsByDegree[degreeIndex].push(halfDim7);
+            }
+        }
+        return chordsByDegree;
+    }
+
+    public toString() {
+        return pitchString(this.root) + " " + this.templateSlug;
+    }
+
+    get name() {
+        return this.toString();
     }
 
     public equals(other: Scale) {

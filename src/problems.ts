@@ -1,7 +1,8 @@
 import { chordChoiceToDivisionedNotes } from "./chordchoicetonotes";
-import { Chord, Scale } from "./musicclasses";
+import { progressionChoices } from "./chordprogression";
+import { Chord, Note, Scale } from "./musicclasses";
 import { MainMusicParams } from "./params";
-import { ChordChoice, RichNote, ChordProblem, DivisionedRichnotes, getRP, globalSemitone, relativePitchType, equalPitch } from "./utils";
+import { ChordChoice, RichNote, ChordProblem, DivisionedRichnotes, getRP, globalSemitone, relativePitchType, equalPitch, semitoneDistance, anyChromaticNotes, relativePitchName } from "./utils";
 
 
 type RulesParams = {
@@ -123,6 +124,32 @@ const doublingRules = (rulesParams: RulesParams) => {
     }
 }
 
+const chordProgressionRules = (rulesParams: RulesParams) => {
+    const { problems, prevChord, prevNotes, nextChord, nextNotes, params } = rulesParams;
+    if (!nextChord || !nextChord.chord) {
+        return;
+    }
+    const nextChordString = nextChord.chord.toString();
+    if (!prevChord || !prevChord.chord || !prevNotes || prevNotes.length == 0) {
+        return;
+    }
+    const availableProgressions = progressionChoices(prevChord.chord, prevNotes[0].scale);
+    if (availableProgressions.length > 0) {
+        console.log("availableProgressions from ", prevChord.chord.toString(), ": ", availableProgressions.map(p => p.toString()));
+    } else {
+        console.log("No availableProgressions from ", prevChord.chord.toString());
+    }
+
+    if (availableProgressions.filter(p => p.toString() == nextChordString).length == 0) {
+        problems.problems.chordProgression.push({
+            type: "chordProgression",
+            slug: "not-available",
+            comment: `Chord ${prevChord.chord.toString()} does not have a progression to ${nextChord.chord.toString()}`,
+            value: 10,
+        });
+    }
+}
+
 
 export const getProblemsBetweenChords = (prevChord: ChordChoice, nextChord: ChordChoice, divisionedNotes: DivisionedRichnotes, params: MainMusicParams) : ChordProblem => {
     const ret = new ChordProblem();
@@ -198,18 +225,18 @@ export const getProblemsBetweenChords = (prevChord: ChordChoice, nextChord: Chor
             ret.problems.badInterval.push({
                 value: 10,
                 type: "badInterval",
-                comment: "part1Interval is " + rpType
+                comment: "Alto interval is a " + relativePitchName(part1Interval)
             });
         }
     }
     if (part2Distance > 1) {
-        const part2Interval = getRP(prevNotes[1].note.pitch, nextNotes[1].note.pitch);
+        const part2Interval = getRP(prevNotes[2].note.pitch, nextNotes[2].note.pitch);
         const rpType = relativePitchType(part2Interval);
         if (['augmented', 'diminished'].includes(rpType)) {
             ret.problems.badInterval.push({
                 value: 10,
                 type: "badInterval",
-                comment: "part2Interval is " + rpType
+                comment: "Tenor interval is " + relativePitchName(part2Interval)
             });
         }
     }
@@ -223,6 +250,15 @@ export const getProblemsBetweenChords = (prevChord: ChordChoice, nextChord: Chor
             slug: "part3Distance",
             comment: "part3Distance"
         });
+        const part3Interval = getRP(prevNotes[3].note.pitch, nextNotes[3].note.pitch);
+        const rpType = relativePitchType(part3Interval);
+        if (['augmented', 'diminished'].includes(rpType)) {
+            ret.problems.badInterval.push({
+                value: 10,
+                type: "badInterval",
+                comment: "Bass interval is " + relativePitchName(part3Interval)
+            });
+        }
     }
 
     doublingRules({
@@ -233,6 +269,15 @@ export const getProblemsBetweenChords = (prevChord: ChordChoice, nextChord: Chor
         problems: ret,
         params,
     });
+
+    chordProgressionRules({
+        prevChord,
+        nextChord,
+        prevNotes,
+        nextNotes,
+        problems: ret,
+        params,
+    })
 
     return ret;
 };

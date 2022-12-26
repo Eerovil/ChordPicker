@@ -4,5 +4,6 @@
     "search.exclude": {
         "**/dist": true,
         "dist": true
-    }
+    },
+    "jest.jestCommandLine": "node_modules/.bin/jest"
 }

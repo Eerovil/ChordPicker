@@ -191,6 +191,7 @@ createApp({
     for (let key in this.chords) {
       if (!this.chords[key].chord) {
         delete this.chords[key];
+        continue;
       }
       this.chords[key].chord = window.Chord.fromObject(this.chords[key].chord);
       this.chords[key].notes = (this.chords[key].notes || []).map(note => window.Note.fromObject(note));

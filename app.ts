@@ -30,7 +30,10 @@ import { parseLilyPondString } from "./src/lilypond";
         if (chords[division].selectedScale) {
             currentScale = (chords[division].selectedScale as Scale);
         }
-        (divisionedNotes[division] || []).forEach(rn => rn.scale = currentScale);
+        (divisionedNotes[division] || []).forEach(rn => {
+            rn.scale = currentScale;
+            rn.inversion = chords[division].inversion;
+        });
     }
     console.log(divisionedNotes);
     cleanDivisionedNotes(divisionedNotes, params);

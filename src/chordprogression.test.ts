@@ -152,6 +152,16 @@ describe('test other chord progressions', () => {
         }
     })
 
+    test('Progress from Edmin to Gmin', () => {
+        // This is not a secondary dominant, and should not work
+        const CminChord = Chord.create('E', 'dim');
+        const choices = progressionChoices(CminChord, CMajorScale)
+        const BadProg = choices.filter(c => c.chord.toString() == "Gmin");
+        if (BadProg.length > 0) {
+            expect(BadProg[0].reason).toBe("a good reason");
+        }
+    })
+
     test('Progress from Bdom7 to Cdom7', () => {
         // This is not a secondary dominant, and should not work
         // Apparently this is taking a tritone sub of Bbdom7, which is Fdom7

@@ -301,6 +301,9 @@ export const getProblemsBetweenChords = (prevChord: ChordChoice, nextChord: Chor
 
     // How did it go?
     const prevRichNotes = fakeDivisionedNotes[prevChord.division];
+    if (prevChord.selectedScale) {
+        prevRichNotes.forEach(rn => rn.scale = (prevChord.selectedScale as Scale));
+    }
     const nextRichNotes = fakeDivisionedNotes[nextChord.division];
 
     const prevNotes = [

@@ -132,12 +132,17 @@ function addRichNoteToMeasure(richNote: RichNote, measure: builder.XMLElement, s
   let lyric = richNote.tension && staff == 0 ? { '@number': '1', 'text': { '#text': `${richNote.tension}` } } : undefined
   let lyric2 = undefined;
 
+  const inversionToString = (inversion: number | undefined) => {
+    if (!inversion) return '';
+    return ['a', 'b', 'c', 'd', 'e', 'f', 'g'][inversion];
+  }
+
   if (richNote.scale && richNote.chord && staff == 1) {
-    const romanNumeral = richNote.chord.getChordDegree(richNote.scale);
+    const romanNumeral = richNote.chord.getChordDegree(richNote.scale) + inversionToString(richNote.inversion);
     lyric = { '@number': '1', 'text': { '#text': romanNumeral } }
     const alternativeRomanNumeral = richNote.chord.getAlternativeChordDegree(richNote.scale);
     if (alternativeRomanNumeral) {
-      lyric2 = { '@number': '2', 'text': { '#text': alternativeRomanNumeral } }
+      lyric2 = { '@number': '2', 'text': { '#text': alternativeRomanNumeral + inversionToString(richNote.inversion) } }
     }
   }
 

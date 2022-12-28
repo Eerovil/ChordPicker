@@ -102,6 +102,11 @@
                     </option>
                   </select>
                 </div>
+                <div>
+                  <input type="checkbox" v-model="ignoreProblems.melody">Ignore Melody Problems</input>
+                  <input type="checkbox" v-model="ignoreProblems.nextChord">Ignore Next Chord Problems</input>
+                  <input type="checkbox" v-model="ignoreProblems.prevChord">Ignore Prev Chord Problems</input>
+                </div>
               </div>
               <select v-model="selectedChord">
                 <option v-for="chord in filteredChordChoicesByTotalScore" :value="chord">
@@ -169,6 +174,11 @@ createApp({
       selectedChordRoman: null,
       selectedChordType: null,
       selectedChord: null,
+      ignoreProblems: {
+        melody: false,
+        nextChord: false,
+        prevChord: false,
+      },
     }
   },
   mounted() {
@@ -271,6 +281,13 @@ createApp({
     }
   },
   methods: {
+    updateTotalScores() {
+      const chordChoiceTotalScore = window.chordChoiceTotalScore;
+      for (let i = 0; i < this.chordChoices.length; i++) {
+        const chordChoice = this.chordChoices[i];
+        chordChoice.totalScore = chordChoiceTotalScore(chordChoice, this.params);
+      }
+    },
     saveSong() {
       window.localStorage.setItem('chords', JSON.stringify(this.chords));
       window.localStorage.setItem('melody', JSON.stringify(this.melody));
@@ -375,6 +392,27 @@ createApp({
     melody: {
       handler() {
         this.refreshXML();
+      },
+      deep: true,
+    },
+    ignoreProblems: {
+      handler(newValue) {
+        if (newValue.melody) {
+          this.params.problemWeights.self.melody = 0;
+        } else {
+          this.params.problemWeights.self.melody = 1;
+        }
+        if (newValue.nextChord) {
+          this.params.problemWeights.next.chordProgression = 0;
+        } else {
+          this.params.problemWeights.next.chordProgression = 1;
+        }
+        if (newValue.prevChord) {
+          this.params.problemWeights.prev.chordProgression = 0;
+        } else {
+          this.params.problemWeights.prev.chordProgression = 1;
+        }
+        this.updateTotalScores();
       },
       deep: true,
     }

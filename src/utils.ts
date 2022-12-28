@@ -151,7 +151,7 @@ export class ChordProblem {
         }
         return score;
     }
-    get totalScore() {
+    public totalScore(weights: { [key in ChordProblemType]: number }) {
         let score = 0;
         const handledProblems = new Set();
 
@@ -162,18 +162,18 @@ export class ChordProblem {
                 if (slug == 'part0Distance') {
                     // This means that melody is not given.
                     // Still, jumps in the melody are quite OK
-                    score += problem.value;
+                    score += problem.value * weights.voiceDistance;
                 } else if (['part1Distance', 'part2Distance'].includes(slug)) {
                     // Inner voices shouldn't jump too much
                     if (problem.value <= 2) {
                         // Step wise motion is OK
-                        score += problem.value;
+                        score += problem.value * weights.voiceDistance;
                     } else {
-                        score += problem.value * 3;
+                        score += problem.value * 3 * weights.voiceDistance;
                     }
                 } else if (['part3Distance'].includes(slug)) {
                     // Bass can jump around
-                    score += problem.value;
+                    score += problem.value * weights.voiceDistance;
                 }
             }
             handledProblems.add("voiceDistance");
@@ -183,7 +183,7 @@ export class ChordProblem {
             if (handledProblems.has(key)) {
                 continue;
             }
-            score += this.getScore(key as ChordProblemType);
+            score += this.getScore(key as ChordProblemType) * weights[key as ChordProblemType];
         }
         return score;
     }
@@ -203,6 +203,16 @@ export type ChordChoice = {
     notes?: Array<Note>,
     division?: number,
 }
+
+
+export const chordChoiceTotalScore = (choice: ChordChoice, params: MainMusicParams): number => {
+    let totalScore = 0;
+    totalScore += choice.prevProblem?.totalScore(params.problemWeights.prev) || 0;
+    totalScore += choice.nextProblem?.totalScore(params.problemWeights.next) || 0;
+    totalScore += choice.selfProblem?.totalScore(params.problemWeights.self) || 0;
+    return totalScore;
+}
+
 
 export type ChordChoicesByDivision = {
     [key: number]: ChordChoice,

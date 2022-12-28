@@ -1,9 +1,45 @@
 import { Scale } from "./musicclasses";
 import { allPitches } from "./musictemplates";
+import { ChordProblemType } from "./utils";
 
 export class MainMusicParams {
     beatsPerBar: number = 4;
     tempo: number = 70;
+    problemWeights: {[key in "self" | "next" | "prev"]: {[key in ChordProblemType]: number}} = {
+        self:
+        {
+            'voiceDistance': 1,
+            'badInterval': 1,
+            'chordProgression': 1,
+            'dissonance': 1,
+            'melody': 1,
+            'overlapping': 1,
+            'doubling': 1,
+            'chromaticism': 1,
+        },
+        next:
+        {
+            'voiceDistance': 1,
+            'badInterval': 1,
+            'chordProgression': 1,
+            'dissonance': 1,
+            'melody': 1,
+            'overlapping': 1,
+            'doubling': 1,
+            'chromaticism': 1,
+        },
+        prev:
+        {
+            'voiceDistance': 1,
+            'badInterval': 1,
+            'chordProgression': 1,
+            'dissonance': 1,
+            'melody': 1,
+            'overlapping': 1,
+            'doubling': 1,
+            'chromaticism': 1,
+        },
+    }
 
     parts: Array<{
         voice: string,

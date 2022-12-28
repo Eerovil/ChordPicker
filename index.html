@@ -182,7 +182,9 @@ createApp({
       },
     }
   },
-  mounted() {
+  async mounted() {
+    const waitFor1000ms = () => new Promise(resolve => setTimeout(resolve, 1000));
+    await waitFor1000ms();
     this.params = new window.MainMusicParams();
 
     this.chords = JSON.parse(window.localStorage.getItem('chords') || "{}") || {};

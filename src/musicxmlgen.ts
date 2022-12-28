@@ -1,5 +1,5 @@
 import builder from 'xmlbuilder';
-import { Note, Scale, Chord } from './musicclasses';
+import { Note, Scale, Chord, getScale } from './musicclasses';
 import { allPitches } from './musictemplates';
 import { MainMusicParams } from './params';
 import { DivisionedRichnotes, globalSemitone, RichNote } from './utils';
@@ -34,7 +34,7 @@ const chordToChord = (chord: any) => {
   if (chord instanceof Chord) {
     return chord;
   }
-  return new Chord(
+  return Chord.create(
     chord.root,
     chord.chordType,
   );
@@ -93,7 +93,7 @@ const flatScaleSemitones: Set<number> = new Set([
 function noteToPitch(richNote: RichNote) {
   const note = noteToNote(richNote.note);
   // const noteScale = scaleToScale(richNote.scale);
-  // const scoreScale = new Scale({ key: 0, octave: note.octave, template: ScaleTemplates.major })
+  // const scoreScale = Scale.create({ key: 0, octave: note.octave, template: ScaleTemplates.major })
 
   const degreeName = ['C', 'D', 'E', 'F', 'G', 'A', 'B'][note.pitch.degree];
   return {
@@ -116,7 +116,6 @@ function addRichNoteToMeasure(richNote: RichNote, measure: builder.XMLElement, s
     return;
   }
   richNote.scale = scaleToScale(richNote.scale);
-  richNote.originalScale = scaleToScale(richNote.originalScale);
   richNote.chord = chordToChord(richNote.chord);
   const duration = richNoteDuration(richNote);
   let beamNumber = 1;
@@ -528,19 +527,19 @@ export function toXml(divisionedNotes: DivisionedRichnotes, mainParams: MainMusi
 
   const maxDivision = Math.max(...Object.keys(divisionedNotes).map((k) => parseInt(k)))
   let division = 0;
-  let currentScale = new Scale(allPitches[0], 'major');
+  let currentScale = getScale(allPitches[0], 'major');
   while (division <= maxDivision) {
     let keyChange;
     if (
       divisionedNotes[division] &&
       divisionedNotes[division][0] &&
-      divisionedNotes[division][0].originalScale != undefined &&
+      divisionedNotes[division][0].scale != undefined &&
       // @ts-ignore
-      !currentScale.equals(divisionedNotes[division][0].originalScale)
+      !currentScale.equals(divisionedNotes[division][0].scale)
     ) {
       keyChange = getKeyChange(currentScale, divisionedNotes[division][0]);
       // @ts-ignore
-      currentScale = divisionedNotes[division][0].originalScale;
+      currentScale = divisionedNotes[division][0].scale;
       if (keyChange && keyChange.fifths === 0 && keyChange.cancel === 0) {
         keyChange = undefined;
       }

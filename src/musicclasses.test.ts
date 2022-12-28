@@ -3,18 +3,18 @@ import { Chord, Scale } from './musicclasses';
 import { allPitchesByName } from './musictemplates';
 
 describe('chord degree test', () => {
-    const CMajorScale = new Scale(allPitchesByName['C'], 'major');
+    const CMajorScale = Scale.create(allPitchesByName['C'], 'major');
     test('sub', () => {
-        expect(new Chord(allPitchesByName['C'], 'maj').getChordDegree(CMajorScale)).toBe('I');
-        expect(new Chord(allPitchesByName['D'], 'min').getChordDegree(CMajorScale)).toBe('ii');
-        expect(new Chord(allPitchesByName['D'], 'maj').getChordDegree(CMajorScale)).toBe('II');
-        expect(new Chord(allPitchesByName['D'], 'dom7').getChordDegree(CMajorScale)).toBe('II7');
-        expect(new Chord(allPitchesByName['Db'], 'dom7').getChordDegree(CMajorScale)).toBe('bII7');
-        expect(new Chord(allPitchesByName['F#'], 'maj').getChordDegree(CMajorScale)).toBe('#IV');
+        expect(Chord.create(allPitchesByName['C'], 'maj').getChordDegree(CMajorScale)).toBe('I');
+        expect(Chord.create(allPitchesByName['D'], 'min').getChordDegree(CMajorScale)).toBe('ii');
+        expect(Chord.create(allPitchesByName['D'], 'maj').getChordDegree(CMajorScale)).toBe('II');
+        expect(Chord.create(allPitchesByName['D'], 'dom7').getChordDegree(CMajorScale)).toBe('II7');
+        expect(Chord.create(allPitchesByName['Db'], 'dom7').getChordDegree(CMajorScale)).toBe('bII7');
+        expect(Chord.create(allPitchesByName['F#'], 'maj').getChordDegree(CMajorScale)).toBe('#IV');
     });
 
     test('alt degree', () => {
-        expect(new Chord(allPitchesByName['D'], 'maj').getAlternativeChordDegree(CMajorScale)).toBe('V/V');
-        expect(new Chord(allPitchesByName['F'], 'min').getAlternativeChordDegree(CMajorScale)).toBe(undefined);
+        expect(Chord.create(allPitchesByName['D'], 'maj').getAlternativeChordDegree(CMajorScale)).toBe('V/V');
+        expect(Chord.create(allPitchesByName['F'], 'min').getAlternativeChordDegree(CMajorScale)).toBe(undefined);
     });
 });

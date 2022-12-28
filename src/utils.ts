@@ -97,7 +97,6 @@ export type RichNote = {
     chord?: Chord,
     partIndex: number,
     scale: Scale,
-    originalScale: Scale,
     beam?: string,
     tie?: string,
     tension: number,
@@ -203,6 +202,7 @@ export type ChordChoice = {
     chord?: Chord,
     notes?: Array<Note>,
     division?: number,
+    selectedScale?: Scale,
 }
 
 

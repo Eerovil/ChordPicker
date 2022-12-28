@@ -16,7 +16,7 @@ export class ChordGenerator {
     public *getChord(): Generator<Chord> {
         for (const root of this.roots) {
             for (const chordType of this.chordTypes) {
-                const chord = new Chord(root, chordType);
+                const chord = Chord.create(root, chordType);
                 yield chord;
             }
         }

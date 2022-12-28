@@ -1,4 +1,4 @@
-import { Chord, Pitch, Scale } from "./musicclasses";
+import { Chord, getScale, Pitch, Scale } from "./musicclasses";
 import { scaleTemplates } from "./musictemplates";
 import { equalPitch, anyChromaticNotes, PitchPlusRP, enharmonicPitch } from "./utils";
 
@@ -39,7 +39,7 @@ export const chordSubstitutions = (chord: Chord, scale: Scale): Array<Chord> => 
     const chordDegree = scale.pitches.findIndex(x => equalPitch(x, chord.notes[0].pitch));
     if (!anyChromaticNotes(chord.notes, scale)) {
         for (const scaleSlug of modalMixtureScales) {
-            const newScale = new Scale(scale.pitches[0], scaleSlug);
+            const newScale = getScale(scale.pitches[0], scaleSlug);
             ret = ret.concat(newScale.diatonicChordsByDegree[chordDegree]);
         }
     }
@@ -47,7 +47,7 @@ export const chordSubstitutions = (chord: Chord, scale: Scale): Array<Chord> => 
     // tritone substitution of the 7th chord
     if (chord.chordType == 'dom7') {
         const tritonePitch = enharmonicPitch(PitchPlusRP(chord.notes[0].pitch, {degree: 3, sharp: 1}), scale);
-        ret.push(new Chord(tritonePitch, 'dom7'));
+        ret.push(Chord.create(tritonePitch, 'dom7'));
     }
     return ret.filter(c => c.toString() != chord.toString());
 }
@@ -134,7 +134,7 @@ export const progressionChoices = (chord: Chord, scale: Scale, passedRecursionHa
             // Make a scale that has this chord as the dominant.
             for (const scaleType of ['major', 'minor', 'harmonicMinor']) {
                 const degree5Interval = scaleTemplates[scaleType][4];
-                const dominantScale = new Scale(PitchPlusRP(chord.root, degree5Interval, false), scaleType);  // 5th down
+                const dominantScale = getScale(PitchPlusRP(chord.root, degree5Interval, false), scaleType);  // 5th down
                 // Run this same function but with the dominant scale.
                 // TODO: Should chromatic notes here be allowed...?
                 if (!anyChromaticNotes(chord.notes, dominantScale)) {
@@ -151,7 +151,7 @@ export const progressionChoices = (chord: Chord, scale: Scale, passedRecursionHa
             // Make a scale that has this chord as the two chord
             for (const scaleType of ['major', 'minor', 'harmonicMinor']) {
                 const degree2Interval = scaleTemplates[scaleType][1];
-                const dominantScale = new Scale(PitchPlusRP(chord.root, degree2Interval, false), scaleType);  // 2nd down
+                const dominantScale = getScale(PitchPlusRP(chord.root, degree2Interval, false), scaleType);  // 2nd down
                 // Run this same function but with the dominant scale.
                 if (!anyChromaticNotes(chord.notes, dominantScale)) {
                     initialResults = initialResults.concat(
@@ -168,7 +168,7 @@ export const progressionChoices = (chord: Chord, scale: Scale, passedRecursionHa
             for (const scaleType of ['major', 'minor', 'harmonicMinor']) {
                 // We need to check what the degree 7 is for this scale.
                 const degree7Interval = scaleTemplates[scaleType][6];
-                const dominantScale = new Scale(PitchPlusRP(chord.root, degree7Interval, false), scaleType);  // 7th down
+                const dominantScale = getScale(PitchPlusRP(chord.root, degree7Interval, false), scaleType);  // 7th down
                 // Run this same function but with the dominant scale.
                 if (!anyChromaticNotes(chord.notes, dominantScale)) {
                     initialResults = initialResults.concat(
@@ -216,7 +216,7 @@ export const progressionChoices = (chord: Chord, scale: Scale, passedRecursionHa
                 // Make a scale that has this chord as the root/tonic
                 for (const scaleType of ['major', 'harmonicMinor']) {
                     const chordPitchDegree = scale.pitches.findIndex(p => equalPitch(p, prog.chord.root));
-                    const dominantScale = new Scale(prog.chord.root, scaleType);
+                    const dominantScale = getScale(prog.chord.root, scaleType);
                     if (equalPitch(dominantScale.root, scale.root)) {
                         continue;
                     }

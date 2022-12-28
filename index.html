@@ -64,6 +64,9 @@
                   <select v-model="selectedChordKey" id="chord-key-filter">
                     <option v-for="rootPitchName in chordRootChoices" :value="rootPitchName">{{ rootPitchName }}</option>
                   </select>
+                  <select v-model="selectedChordKeyType">
+                    <option v-for="keyType in ['minor', 'major']" :value="keyType">{{ keyType }}</option>
+                  </select>
                 </div>
                 <div>
                   <label for="chord-root-filter">Root</label>
@@ -73,6 +76,10 @@
                   </select>
                 </div>
                 <div>
+                  <label for="chord-key-filter">RomanRoot</label>
+                  <select v-model="selectedChordRomanRoot" id="chord-key-filter">
+                    <option v-for="rootPitchName in chordRootChoices" :value="rootPitchName">{{ rootPitchName }}</option>
+                  </select>
                   <label for="chord-roman-filter">Roman</label>
                   <select v-model="selectedChordRoman" id="chord-roman-filter">
                     <option :value="null">Any</option>
@@ -156,7 +163,9 @@ createApp({
       editingChord: -1,
       chordChoices: [],
       selectedChordKey: 'C',
+      selectedChordKeyType: 'major',
       selectedChordRoot: null,
+      selectedChordRomanRoot: null,
       selectedChordRoman: null,
       selectedChordType: null,
       selectedChord: null,
@@ -242,7 +251,7 @@ createApp({
       if (this.selectedChordRoman) {
         ret = ret.filter((chord) => {
           const degree = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII'].indexOf(this.selectedChordRoman)
-          return chord.chord.getDegreePitch(new Scale(this.selectedChordKeyPitch, 'major')).degree == degree;
+          return chord.chord.getDegreePitch(getScale(this.selectedChordRomanRootPitch, 'major')).degree == degree;
         });
       }
       if (this.selectedChordType) {
@@ -265,6 +274,9 @@ createApp({
     },
     selectedChordKeyPitch() {
       return (new window.Note(this.selectedChordKey)).pitch;
+    },
+    selectedChordRomanRootPitch() {
+      return (new window.Note(this.selectedChordRomanRoot)).pitch;
     }
   },
   methods: {
@@ -322,19 +334,32 @@ createApp({
         nextChord = this.chords[tmpIndex];
         tmpIndex++;
       }
+      let prevScale = null;
+      while (!prevScale && tmpIndex >= 0) {
+        if (this.chords[tmpIndex]) {
+          prevScale = this.chords[tmpIndex].selectedScale;
+        }
+        tmpIndex--;
+      }
+      if (!prevScale) {
+        prevScale = getScale('C', 'major');
+      }
       this.editingChord = index;
       this.chordChoices = await window.getChordChoices(this.melodyText, index, prevChord, nextChord, this.params);
       if (this.chords[index]) {
         this.selectedChord = this.chords[index];
       }
-      this.selectedChordKey = "C";
+      this.selectedChordKey = pitchString(prevScale.root)
+      this.selectedChordKeyType = prevScale.templateSlug;
       this.selectedChordRoot = null;
+      this.selectedChordRomanRoot = pitchString(prevScale.root);
       this.selectedChordRoman = null;
       this.selectedChordType = null;
     },
     saveChord() {
       this.chords[this.editingChord] = this.selectedChord;
       this.chords[this.editingChord].division = this.editingChord;
+      this.chords[this.editingChord].selectedScale = getScale(this.selectedChordKeyPitch, this.selectedChordKeyType);
       this.editingChord = -1;
       this.refreshXML();
     },

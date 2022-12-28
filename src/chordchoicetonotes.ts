@@ -49,7 +49,6 @@ export const chordChoiceToDivisionedNotes = (chordChoice: ChordChoice, division:
         partIndex: 3,
         chord: chord,
         scale: (window as any).CMAJ,
-        originalScale: (window as any).CMAJ,
         tension: 0,
     })
 
@@ -206,7 +205,6 @@ export const chordChoiceToDivisionedNotes = (chordChoice: ChordChoice, division:
         partIndex: 1,
         chord: chord,
         scale: (window as any).CMAJ,
-        originalScale: (window as any).CMAJ,
         tension: 0,
     })
     divisionedNotes[division].push({
@@ -215,7 +213,6 @@ export const chordChoiceToDivisionedNotes = (chordChoice: ChordChoice, division:
         partIndex: 2,
         chord: chord,
         scale: (window as any).CMAJ,
-        originalScale: (window as any).CMAJ,
         tension: 0,
     })
 
@@ -233,7 +230,6 @@ export const chordChoiceToDivisionedNotes = (chordChoice: ChordChoice, division:
             partIndex: 0,
             chord: chord,
             scale: (window as any).CMAJ,
-            originalScale: (window as any).CMAJ,
             tension: 0,
         })
     }

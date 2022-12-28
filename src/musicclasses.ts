@@ -12,6 +12,19 @@ export type RelativePitch = {
     sharp: number,
 }
 
+
+const allScales: {[key: string]: Scale} = {};
+
+
+export const getScale = (root: Pitch, templateSlug: string): Scale => {
+    const key = `${pitchString(root)}-${templateSlug}`;
+    if (allScales[key] == null) {
+        allScales[key] = new Scale(root, templateSlug);
+    }
+    return allScales[key];
+}
+
+
 export class Scale {
     root: Pitch;
     templateSlug: string;
@@ -61,7 +74,7 @@ export class Scale {
         const ret = [];
         let degree = 0;
         for (const chordTemplateSlug of diatonicChordsByScale[this.templateSlug]) {
-            ret.push(new Chord(this.pitches[degree], chordTemplateSlug));
+            ret.push(Chord.create(this.pitches[degree], chordTemplateSlug));
             degree++;
         }
         return ret;
@@ -81,15 +94,15 @@ export class Scale {
         // Add some 7th chords
         for (const degreeIndex in triads) {
             const chord = chordsByDegree[degreeIndex][0];
-            const dom7 = new Chord(chord.notes[0].pitch, 'dom7');
+            const dom7 = Chord.create(chord.notes[0].pitch, 'dom7');
             if (!anyChromaticNotes(dom7.notes, this)) {
                 chordsByDegree[degreeIndex].push(dom7);
             }
-            const maj7 = new Chord(chord.notes[0].pitch, 'maj7');
+            const maj7 = Chord.create(chord.notes[0].pitch, 'maj7');
             if (!anyChromaticNotes(maj7.notes, this)) {
                 chordsByDegree[degreeIndex].push(maj7);
             }
-            const halfDim7 = new Chord(chord.notes[0].pitch, 'dimhalf7');
+            const halfDim7 = Chord.create(chord.notes[0].pitch, 'dimhalf7');
             if (!anyChromaticNotes(halfDim7.notes, this)) {
                 chordsByDegree[degreeIndex].push(halfDim7);
             }
@@ -113,8 +126,15 @@ export class Scale {
         );
     }
 
+    static create(root: Pitch, templateSlug: string) {
+        return getScale(
+            root,
+            templateSlug,
+        );
+    }
+
     static fromObject(obj: any) {
-        return new Scale(
+        return getScale(
             obj.root,
             obj.templateSlug,
         );
@@ -184,10 +204,42 @@ export class Note {
     }
 }
 
+const allChords: {[key: string]: Chord} = {};
+
+
+export const getChord = (passedPitch: Pitch | string, chordType: string | undefined = undefined): Chord => {
+    let pitch: Pitch;
+    if (typeof passedPitch == "string") {
+        const parsedType = passedPitch.match(/^(\w(#|b)?)(.*)/);
+        if (parsedType == null) {
+            throw "Invalid chord name " + passedPitch;
+        }
+        pitch = pitchNameToPitch(parsedType[0]);
+        chordType = chordType || parsedType[1];
+    } else {
+        pitch = passedPitch;
+    }
+    const key = `${pitchString(pitch)}-${chordType}`;
+    if (allChords[key] == null) {
+        allChords[key] = new Chord(pitch, chordType);
+    }
+    return allChords[key];
+}
+
+
 export class Chord {
-    public notes: Array<Note>;
-    public root: Pitch;
-    public chordType: string;
+    private _notes: Array<Note>;
+    private _root: Pitch;
+    private _chordType: string;
+    get notes() {
+        return this._notes;
+    }
+    get root() {
+        return this._root;
+    }
+    get chordType() {
+        return this._chordType;
+    }
     public toString() {
         return pitchString(this.root) + this.chordType;
     }
@@ -206,19 +258,22 @@ export class Chord {
         } else {
             pitch = passedPitch;
         }
-        this.root = pitch
-        this.chordType = chordType || "?";
+        this._root = pitch
+        this._chordType = chordType || "?";
         const template = chordTemplates[this.chordType];
         if (template == undefined) {
             throw "Unknown chord type: " + chordType;
         }
-        this.notes = [];
+        this._notes = [];
         for (let note of template) {
-            this.notes.push(new Note(PitchPlusRP(this.root, note), 1));
+            this._notes.push(new Note(PitchPlusRP(this.root, note), 1));
         }
     }
+    static create(passedPitch: Pitch | string, chordType: string | undefined = undefined) {
+        return getChord(passedPitch, chordType)
+    }
     static fromObject(obj: any) {
-        return new Chord(obj.root, obj.chordType);
+        return getChord(obj.root, obj.chordType);
     }
     public getDegreePitch(scale: Scale): Pitch {
         let degree = 0;
@@ -274,7 +329,7 @@ export class Chord {
         return ret;
     }
     get defaultDegree() {
-        return this.getChordDegree(new Scale(allPitchesByName['C'], 'major'));
+        return this.getChordDegree(getScale(allPitchesByName['C'], 'major'));
     }
     public getAlternativeChordDegree(scale: Scale) {
         // Return a guess of a possible "of X" chord degree
@@ -287,7 +342,7 @@ export class Chord {
             // Make a scale that has this chord as the dominant.
             for (const scaleType of ['major', 'minor', 'harmonicMinor']) {
                 const degree5Interval = scaleTemplates[scaleType][4];
-                const dominantScale = new Scale(PitchPlusRP(this.root, degree5Interval, false), scaleType);  // 5th down
+                const dominantScale = getScale(PitchPlusRP(this.root, degree5Interval, false), scaleType);  // 5th down
                 // Run this same function but with the dominant scale.
                 // TODO: Should chromatic notes here be allowed...?
                 if (!anyChromaticNotes(this.notes, dominantScale)) {
@@ -303,7 +358,7 @@ export class Chord {
             // Make a scale that has this chord as the two chord
             for (const scaleType of ['major', 'minor', 'harmonicMinor']) {
                 const degree2Interval = scaleTemplates[scaleType][1];
-                const dominantScale = new Scale(PitchPlusRP(this.root, degree2Interval, false), scaleType);  // 2nd down
+                const dominantScale = getScale(PitchPlusRP(this.root, degree2Interval, false), scaleType);  // 2nd down
                 // Run this same function but with the dominant scale.
                 if (!anyChromaticNotes(this.notes, dominantScale)) {
                     const dominantScaleRootTriad = dominantScale.diatonicTriads[0];
@@ -319,7 +374,7 @@ export class Chord {
             for (const scaleType of ['major', 'minor', 'harmonicMinor']) {
                 // We need to check what the degree 7 is for this scale.
                 const degree7Interval = scaleTemplates[scaleType][6];
-                const dominantScale = new Scale(PitchPlusRP(this.root, degree7Interval, false), scaleType);  // 7th down
+                const dominantScale = getScale(PitchPlusRP(this.root, degree7Interval, false), scaleType);  // 7th down
                 // Run this same function but with the dominant scale.
                 if (!anyChromaticNotes(this.notes, dominantScale)) {
                     const dominantScaleRootTriad = dominantScale.diatonicTriads[0];

@@ -1,5 +1,5 @@
 import { DivisionedRichnotes } from "./utils";
-import { Note, Scale } from "./musicclasses";
+import { getScale, Note, Scale } from "./musicclasses";
 import { allPitchesByName } from "./musictemplates";
 
 const degreeNames = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
@@ -82,8 +82,7 @@ export const parseLilyPondString = (lilyPondString: string, divisionedNotes: Div
         divisionedNotes[division].push({
             note,
             duration: currentDuration,
-            scale: new Scale(allPitchesByName['C'], 'major'),
-            originalScale: new Scale(allPitchesByName['C'], 'major'),
+            scale: getScale(allPitchesByName['C'], 'major'),
             tension: 0,
             partIndex: 0,
         });

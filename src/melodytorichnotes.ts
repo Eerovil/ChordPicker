@@ -85,7 +85,6 @@ export const melodyToRichNotes = (melody: Melody, disivionedRichNotes: Divisione
             note,
             duration,
             scale,
-            originalScale: scale,
             tension: 0,
             partIndex: 0,
         });

@@ -6,24 +6,31 @@ import { toXml } from "./src/musicxmlgen";
 import { MainMusicParams } from "./src/params";
 import { loadPlayer, renderMusic } from "./src/player"
 import { getChordProblem, getProblemsBetweenChords } from "./src/problems";
-import { ChordChoice, ChordChoicesByDivision, chordChoiceTotalScore, DivisionedRichnotes, Melody } from "./src/utils"
-import { Chord, Note, Scale } from "./src/musicclasses";
-import { allPitches, chordTemplates } from "./src/musictemplates";
+import { ChordChoice, ChordChoicesByDivision, chordChoiceTotalScore, DivisionedRichnotes, Melody, pitchString } from "./src/utils"
+import { Chord, getScale, Note, Scale } from "./src/musicclasses";
+import { allPitches, allPitchesByName, chordTemplates } from "./src/musictemplates";
 import { parseLilyPondString } from "./src/lilypond";
 
 (window as any).MainMusicParams = MainMusicParams;
-(window as any).CMAJ = new Scale(allPitches[0], 'major');
+(window as any).CMAJ = Scale.create(allPitches[0], 'major');
 (window as any).chordTypes = Object.keys(chordTemplates);
 (window as any).Chord = Chord;
 (window as any).Note = Note;
 (window as any).Scale = Scale;
+(window as any).getScale = getScale;
+(window as any).pitchString = pitchString;
 (window as any).chordChoiceTotalScore = chordChoiceTotalScore;
 
 (window as any).loadMelody = async (lilyPondString: string, chords: ChordChoicesByDivision, params: MainMusicParams) => {
     const divisionedNotes: DivisionedRichnotes = {};
     parseLilyPondString(lilyPondString, divisionedNotes);
+    let currentScale = getScale(allPitchesByName['C'], 'major');
     for (const division in chords) {
         chordChoiceToDivisionedNotes(chords[division], parseInt(division), divisionedNotes, params);
+        if (chords[division].selectedScale) {
+            currentScale = (chords[division].selectedScale as Scale);
+        }
+        (divisionedNotes[division] || []).forEach(rn => rn.scale = currentScale);
     }
     console.log(divisionedNotes);
     cleanDivisionedNotes(divisionedNotes, params);

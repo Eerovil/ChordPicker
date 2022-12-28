@@ -1,4 +1,4 @@
-import { Scale } from "./musicclasses";
+import { getScale, Scale } from "./musicclasses";
 import { allPitches } from "./musictemplates";
 import { ChordProblemType } from "./utils";
 
@@ -72,6 +72,6 @@ export class MainMusicParams {
         ];
 
     getScale(): Scale {
-        return new Scale(allPitches[0], 'major');
+        return getScale(allPitches[0], 'major');
     }
 }

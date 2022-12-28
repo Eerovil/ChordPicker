@@ -150,6 +150,7 @@
         <button id="btn-pause">PAUSE</button>
         <button id="btn-stop">STOP</button>
         <button id="btn-save" @click="saveSong()">SAVE</button>
+        <button id="btn-clear" @click="clearSong()">RESET</button>
       </div>
     </div>
 </body>
@@ -220,12 +221,7 @@ createApp({
       return Array.from(ret).sort();
     },
     romalNumeralChoices() {
-      const ret = new Set();
-      for (let i = 0; i < this.chordChoices.length; i++) {
-        const chord = this.chordChoices[i];
-        ret.add(chord.chord.getChordDegree(new Scale(this.selectedChordKeyPitch, 'major')));
-      }
-      return Array.from(ret).sort();
+      return ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII'];
     },
     chordTypes() {
       return window.chordTypes;
@@ -255,7 +251,8 @@ createApp({
       }
       if (this.selectedChordRoman) {
         ret = ret.filter((chord) => {
-          return chord.chord.getChordDegree(new Scale(this.selectedChordKeyPitch, 'major')) == this.selectedChordRoman;
+          const degree = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII'].indexOf(this.selectedChordRoman)
+          return chord.chord.getDegreePitch(new Scale(this.selectedChordKeyPitch, 'major')).degree == degree;
         });
       }
       if (this.selectedChordType) {
@@ -292,6 +289,13 @@ createApp({
       window.localStorage.setItem('chords', JSON.stringify(this.chords));
       window.localStorage.setItem('melody', JSON.stringify(this.melody));
       window.localStorage.setItem('melodyText', this.melodyText);
+    },
+    clearSong() {
+      this.chords = {};
+      this.melody = [];
+      this.melodyText = "";
+      this.saveSong();
+      window.location.reload();
     },
     initMelodyNote(noteName) {
       return {

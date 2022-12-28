@@ -220,13 +220,12 @@ export class Chord {
     static fromObject(obj: any) {
         return new Chord(obj.root, obj.chordType);
     }
-    public getChordDegree(scale: Scale) {
-        // Get what this chord would be in the given key
+    public getDegreePitch(scale: Scale): Pitch {
         let degree = 0;
         let sharp = 0;
         if (!scale || !scale.pitches) {
             debugger;
-            return "?";
+            return {degree, sharp};
         }
         for (const pitch of scale.pitches) {
             if (equalPitch(this.root, pitch)) {
@@ -244,6 +243,11 @@ export class Chord {
                 }
             }
         }
+        return {degree, sharp};
+    }
+    public getChordDegree(scale: Scale) {
+        // Get what this chord would be in the given key
+        const {degree, sharp} = this.getDegreePitch(scale);
         const degreeToNumeral = [
             "I", "II", "III", "IV", "V", "VI", "VII"
         ]

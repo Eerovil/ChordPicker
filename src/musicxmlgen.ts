@@ -130,11 +130,16 @@ function addRichNoteToMeasure(richNote: RichNote, measure: builder.XMLElement, s
     }
   }
 
-  let lyric = richNote.tension && staff == 0 ? { 'text': { '#text': `${richNote.tension}` } } : undefined
+  let lyric = richNote.tension && staff == 0 ? { '@number': '1', 'text': { '#text': `${richNote.tension}` } } : undefined
+  let lyric2 = undefined;
 
   if (richNote.scale && richNote.chord && staff == 1) {
     const romanNumeral = richNote.chord.getChordDegree(richNote.scale);
-    lyric = { 'text': { '#text': romanNumeral } }
+    lyric = { '@number': '1', 'text': { '#text': romanNumeral } }
+    const alternativeRomanNumeral = richNote.chord.getAlternativeChordDegree(richNote.scale);
+    if (alternativeRomanNumeral) {
+      lyric2 = { '@number': '2', 'text': { '#text': alternativeRomanNumeral } }
+    }
   }
 
   const attrs = {
@@ -170,6 +175,10 @@ function addRichNoteToMeasure(richNote: RichNote, measure: builder.XMLElement, s
     else if (chordTemplateKey == "dim7") {
       chordType = 'diminished-seventh';
       kindText = "dim7";
+    }
+    else if (chordTemplateKey == "dimhalf7") {
+      chordType = 'half-diminished';
+      kindText = "m7b5";
     }
     else if (chordTemplateKey == "aug") {
       chordType = 'augmented';
@@ -222,7 +231,10 @@ function addRichNoteToMeasure(richNote: RichNote, measure: builder.XMLElement, s
       }
     })
   }
-  measure.ele({ 'note': attrs });
+  const noteEle = measure.ele({ 'note': attrs });
+  if (lyric2) {
+    noteEle.ele({ 'lyric': lyric2 });
+  }
 }
 
 function firstMeasureInit(voicePartIndex: number, measure: builder.XMLElement, params: MainMusicParams, separated: boolean) {

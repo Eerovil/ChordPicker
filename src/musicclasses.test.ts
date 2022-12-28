@@ -12,4 +12,9 @@ describe('chord degree test', () => {
         expect(new Chord(allPitchesByName['Db'], 'dom7').getChordDegree(CMajorScale)).toBe('bII7');
         expect(new Chord(allPitchesByName['F#'], 'maj').getChordDegree(CMajorScale)).toBe('#IV');
     });
+
+    test('alt degree', () => {
+        expect(new Chord(allPitchesByName['D'], 'maj').getAlternativeChordDegree(CMajorScale)).toBe('V/V');
+        expect(new Chord(allPitchesByName['F'], 'min').getAlternativeChordDegree(CMajorScale)).toBe(undefined);
+    });
 });

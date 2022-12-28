@@ -194,7 +194,7 @@ export const progressionChoices = (chord: Chord, scale: Scale, passedRecursionHa
     let finalResults: Array<ChordProgression> = [...ret];
     for (const prog of ret) {
         finalResults = finalResults.concat(chordSubstitutions(prog.chord, scale).map(c => ({
-            chord: c, reason: c.toString() + 'is a substitution of ' + prog.chord.toString() + ' in scale ' + scale.toString()
+            chord: c, reason: prog.reason + " " + c.toString() + 'is a substitution of ' + prog.chord.toString() + ' in scale ' + scale.toString()
         })));
     }
 

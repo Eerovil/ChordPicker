@@ -258,7 +258,11 @@ export class Chord {
             ret = ret.toLowerCase();
         }
         if (this.chordType.includes("dim")) {
-            ret = ret + "°";
+            if (this.chordType.includes("half")) {
+                ret = ret + "ø";  // TODO: add sup-tag or something here.
+            } else {
+                ret = ret + "°";
+            }
         }
         if (this.chordType.includes("7")) {
             ret = ret + "7";
@@ -267,5 +271,59 @@ export class Chord {
     }
     get defaultDegree() {
         return this.getChordDegree(new Scale(allPitchesByName['C'], 'major'));
+    }
+    public getAlternativeChordDegree(scale: Scale) {
+        // Return a guess of a possible "of X" chord degree
+        if (!anyChromaticNotes(this.notes, scale)) {
+            return null;
+        }
+
+        if (['dom7', 'maj'].includes(this.chordType)) {
+            // V or V7 secondary function
+            // Make a scale that has this chord as the dominant.
+            for (const scaleType of ['major', 'minor', 'harmonicMinor']) {
+                const degree5Interval = scaleTemplates[scaleType][4];
+                const dominantScale = new Scale(PitchPlusRP(this.root, degree5Interval, false), scaleType);  // 5th down
+                // Run this same function but with the dominant scale.
+                // TODO: Should chromatic notes here be allowed...?
+                if (!anyChromaticNotes(this.notes, dominantScale)) {
+                    const dominantScaleRootTriad = dominantScale.diatonicTriads[0];
+                    if (!anyChromaticNotes(dominantScaleRootTriad.notes, scale)) {
+                        return `${this.getChordDegree(dominantScale)}/${dominantScaleRootTriad.getChordDegree(scale)}`;
+                    }
+                }
+            }
+        }
+        if (['min', 'min7', 'dim', 'dim7', 'dimhalf7'].includes(this.chordType)) {
+            // iio/iio7 or ii/ii7 secondary function
+            // Make a scale that has this chord as the two chord
+            for (const scaleType of ['major', 'minor', 'harmonicMinor']) {
+                const degree2Interval = scaleTemplates[scaleType][1];
+                const dominantScale = new Scale(PitchPlusRP(this.root, degree2Interval, false), scaleType);  // 2nd down
+                // Run this same function but with the dominant scale.
+                if (!anyChromaticNotes(this.notes, dominantScale)) {
+                    const dominantScaleRootTriad = dominantScale.diatonicTriads[0];
+                    if (!anyChromaticNotes(dominantScaleRootTriad.notes, scale)) {
+                        return `${this.getChordDegree(dominantScale)}/${dominantScaleRootTriad.getChordDegree(scale)}`;
+                    }
+                }
+            }
+        }
+        if (['dim', 'dim7', 'dimhalf7'].includes(this.chordType)) {
+            // viio/viio7 secondary function
+            // Make a scale that has this chord as the vii chord
+            for (const scaleType of ['major', 'minor', 'harmonicMinor']) {
+                // We need to check what the degree 7 is for this scale.
+                const degree7Interval = scaleTemplates[scaleType][6];
+                const dominantScale = new Scale(PitchPlusRP(this.root, degree7Interval, false), scaleType);  // 7th down
+                // Run this same function but with the dominant scale.
+                if (!anyChromaticNotes(this.notes, dominantScale)) {
+                    const dominantScaleRootTriad = dominantScale.diatonicTriads[0];
+                    if (!anyChromaticNotes(dominantScaleRootTriad.notes, scale)) {
+                        return `${this.getChordDegree(dominantScale)}/${dominantScaleRootTriad.getChordDegree(scale)}`;
+                    }
+                }
+            }
+        }
     }
 }

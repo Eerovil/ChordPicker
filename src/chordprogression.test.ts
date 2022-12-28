@@ -3,6 +3,16 @@ import { chordSubstitutions, progressionChoices } from './chordprogression';
 import { Chord, Scale } from './musicclasses';
 import { allPitchesByName } from './musictemplates';
 
+
+
+function expectContains<Type>(arr: Array<Type>, callback: (arg: Type) => boolean) {
+    for (const item of arr) {
+        if (callback(item)) return;
+    }
+    expect(arr).toBe(false);  // Print the array if the test fails
+}
+
+
 describe('test some chord substitutions', () => {
     test('sub', () => {
         const CMajorScale = new Scale(allPitchesByName['C'], 'major');
@@ -106,6 +116,23 @@ describe('test other chord progressions', () => {
         expect(choicesFromiv.some(c => c.chord.toString() == "Dmin")).toBe(true)
         expect(choicesFromiv.filter(c => c.chord.toString() == "Dmin")[0].reason).toContain("diatonic")
         expect(choicesFromiv.some(c => c.chord.toString() == "Adom7")).toBe(true)  // V/ii
+    })
+
+    test('Progression, IV -> iio/ii -> V7/ii -> viio/ii -> ii', () => {
+        // Fmaj -> Edim -> Adom7 -> C#dim -> Dmin
+        const ivChord = diatonicChords[3];
+        let progs = progressionChoices(ivChord, CMajorScale)
+        let nextprogs = progs.filter(c => c.chord.toString() == "Edim");
+        expectContains(nextprogs.map(prog => prog.reason), (reason) => reason.includes("ii° of IV"))
+        progs = progressionChoices(nextprogs[0].chord, CMajorScale)
+        nextprogs = progs.filter(c => c.chord.toString() == "Adom7");
+        expectContains(nextprogs.map(prog => prog.reason), (reason) => reason.includes("diatonic in D harmonicMinor"))
+        progs = progressionChoices(nextprogs[0].chord, CMajorScale)
+        nextprogs = progs.filter(c => c.chord.toString() == "C#dim");
+        expectContains(nextprogs.map(prog => prog.reason), (reason) => reason.includes("diatonic in D harmonicMinor"))
+        progs = progressionChoices(nextprogs[0].chord, CMajorScale)
+        nextprogs = progs.filter(c => c.chord.toString() == "Dmin");
+        expectContains(nextprogs.map(prog => prog.reason), (reason) => reason.includes("diatonic in D harmonicMinor"))
     })
 
     test('Progress from Edim to Cmaj', () => {

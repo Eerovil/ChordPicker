@@ -189,6 +189,9 @@ createApp({
 
     this.chords = JSON.parse(window.localStorage.getItem('chords') || "{}") || {};
     for (let key in this.chords) {
+      if (!this.chords[key].chord) {
+        delete this.chords[key];
+      }
       this.chords[key].chord = window.Chord.fromObject(this.chords[key].chord);
       this.chords[key].notes = (this.chords[key].notes || []).map(note => window.Note.fromObject(note));
     }

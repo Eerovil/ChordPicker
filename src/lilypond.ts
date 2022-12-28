@@ -14,12 +14,12 @@ export const parseLilyPondString = (lilyPondString: string, divisionedNotes: Div
             division += currentDuration;
             continue;
         }
-        const matchResult = lilyNote.match(/([a-zA-Z]+)([',]*)(\d*)/);
+        const matchResult = lilyNote.match(/([a-zA-Z]+)([',]*)(\d*)(\.*)/);
         if (!matchResult) {
             console.log("Can't parse lilypond note: " + lilyNote);
             continue;
         }
-        const [, noteName, octaveName, durationName ] = matchResult;
+        const [, noteName, octaveName, durationName, dottedName ] = matchResult;
         const baseNote = noteName[0].toUpperCase();
         const pitch = {degree: degreeNames.indexOf(baseNote.toUpperCase()), sharp: 0};
         let octave = 4;
@@ -65,6 +65,15 @@ export const parseLilyPondString = (lilyPondString: string, divisionedNotes: Div
 
         if (durationName) {
             currentDuration = (12 * 4) / parseInt(durationName);
+        }
+
+        if (dottedName) {
+            if (dottedName.length === 1) {
+                currentDuration += currentDuration / 2;
+            } else if (dottedName.length === 2) {
+                currentDuration += currentDuration / 2;
+                currentDuration += currentDuration / 4;
+            }
         }
 
         const note = new Note(pitch, octave);

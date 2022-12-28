@@ -1,5 +1,5 @@
-import { allowedScaleRoots, allPitches, chordTemplates, diatonicChordsByScale, scaleTemplates } from "./musictemplates";
-import { anyChromaticNotes, enharmonicPitch, equalPitch, getRP, pitchNameToPitch, PitchPlusRP, pitchString, pitchToSemitone, semitoneDistance } from "./utils";
+import { allowedScaleRoots, allPitches, allPitchesByName, chordTemplates, diatonicChordsByScale, scaleTemplates } from "./musictemplates";
+import { anyChromaticNotes, enharmonicPitch, equalPitch, getRP, pitchNameToPitch, PitchPlusRP, pitchString, pitchToSemitone, relativePitchName, semitoneDistance } from "./utils";
 
 
 export type Pitch = {
@@ -220,20 +220,41 @@ export class Chord {
     static fromObject(obj: any) {
         return new Chord(obj.root, obj.chordType);
     }
-    public getChordDegree(root: Pitch) {
+    public getChordDegree(scale: Scale) {
         // Get what this chord would be in the given key
-        const intervalToRoot = getRP(root, this.root);
+        let degree = 0;
+        let sharp = 0;
+        if (!scale || !scale.pitches) {
+            debugger;
+            return "?";
+        }
+        for (const pitch of scale.pitches) {
+            if (equalPitch(this.root, pitch)) {
+                break;
+            }
+            degree++;
+        }
+        if (degree == scale.pitches.length) {
+            // Find the closest pitch
+            for (const pitch of scale.pitches) {
+                if (pitch.degree == this.root.degree) {
+                    degree = pitch.degree;
+                    sharp = semitoneDistance(pitchToSemitone(pitch), pitchToSemitone(this.root));
+                    break;
+                }
+            }
+        }
         const degreeToNumeral = [
             "I", "II", "III", "IV", "V", "VI", "VII"
         ]
-        let ret = degreeToNumeral[intervalToRoot.degree];
-        if (intervalToRoot.sharp > 0) {
+        let ret = degreeToNumeral[degree];
+        if (sharp > 0) {
             ret = "#" + ret;
         }
-        if (intervalToRoot.sharp < 0) {
+        if (sharp < 0) {
             ret = "b" + ret;
         }
-        if (!(this.chordType.includes("maj"))) {
+        if (relativePitchName(getRP(this.root, this.notes[1].pitch)) == 'minor third') {
             ret = ret.toLowerCase();
         }
         if (this.chordType.includes("dim")) {
@@ -245,6 +266,6 @@ export class Chord {
         return ret;
     }
     get defaultDegree() {
-        return this.getChordDegree(allPitches[0]);
+        return this.getChordDegree(new Scale(allPitchesByName['C'], 'major'));
     }
 }

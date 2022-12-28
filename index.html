@@ -213,7 +213,7 @@ createApp({
       const ret = new Set();
       for (let i = 0; i < this.chordChoices.length; i++) {
         const chord = this.chordChoices[i];
-        ret.add(chord.chord.getChordDegree(this.selectedChordKeyPitch));
+        ret.add(chord.chord.getChordDegree(new Scale(this.selectedChordKeyPitch, 'major')));
       }
       return Array.from(ret).sort();
     },
@@ -245,7 +245,7 @@ createApp({
       }
       if (this.selectedChordRoman) {
         ret = ret.filter((chord) => {
-          return chord.chord.getChordDegree(this.selectedChordKeyPitch) == this.selectedChordRoman;
+          return chord.chord.getChordDegree(new Scale(this.selectedChordKeyPitch, 'major')) == this.selectedChordRoman;
         });
       }
       if (this.selectedChordType) {

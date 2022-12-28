@@ -124,7 +124,9 @@ export const progressionChoices = (chord: Chord, scale: Scale, passedRecursionHa
         const substitutions = chordSubstitutions(chord, scale);
         recursionHandled.add(`${chord.toString()}-${scale.toString()}`);
         for (const sub of substitutions) {
-            initialResults = initialResults.concat(progressionChoices(sub, scale, recursionHandled));
+            initialResults = initialResults.concat(progressionChoices(sub, scale, recursionHandled).map(
+                prog => {prog.reason += " as substitution of " + sub.toString(); return prog;}
+            ));
         }
 
         if (['dom7', 'maj'].includes(chord.chordType)) {
@@ -144,7 +146,7 @@ export const progressionChoices = (chord: Chord, scale: Scale, passedRecursionHa
                 }
             }
         }
-        if (['min', 'min7', 'dim', 'dim7'].includes(chord.chordType)) {
+        if (['min', 'min7', 'dim', 'dim7', 'dimhalf7'].includes(chord.chordType)) {
             // iio/iio7 or ii/ii7 secondary function
             // Make a scale that has this chord as the two chord
             for (const scaleType of ['major', 'minor', 'harmonicMinor']) {
@@ -160,7 +162,7 @@ export const progressionChoices = (chord: Chord, scale: Scale, passedRecursionHa
                 }
             }
         }
-        if (['dim', 'dim7'].includes(chord.chordType)) {
+        if (['dim', 'dim7', 'dimhalf7'].includes(chord.chordType)) {
             // viio/viio7 secondary function
             // Make a scale that has this chord as the vii chord
             for (const scaleType of ['major', 'minor', 'harmonicMinor']) {
@@ -197,14 +199,14 @@ export const progressionChoices = (chord: Chord, scale: Scale, passedRecursionHa
     }
 
     // Add secondary dominants of each diatonic chord
-    const addSecondaryDominants = (chords: Chord[], degree: number, of: number, dominantScale: Scale) => {
+    const addSecondaryDominants = (chords: Chord[], dominantScale: Scale) => {
         for (const chord of chords) {
             if (!anyChromaticNotes(chord.notes, scale)) {
                 // Secondary dominants must have chromatic notes.
                 continue;
             }
-            const degrees = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII'];
-            finalResults.push({chord, reason: `${chord.toString()} is ${chord.getChordDegree(scale.root)} of ${degrees[of]}`});
+            const dominantItriad = dominantScale.diatonicTriads[0];
+            finalResults.push({chord, reason: `${chord.toString()} is ${chord.getChordDegree(dominantScale)} of ${dominantItriad.getChordDegree(scale)} (${dominantItriad.toString()}) `});
         }
     }
 
@@ -213,7 +215,7 @@ export const progressionChoices = (chord: Chord, scale: Scale, passedRecursionHa
             if (['maj', 'min'].includes(prog.chord.chordType)) {
                 // Make a scale that has this chord as the root/tonic
                 for (const scaleType of ['major', 'harmonicMinor']) {
-                    const chordDegree = scale.diatonicChordsByDegree.findIndex(chords => chords.some(c => c.toString() == prog.chord.toString()));
+                    const chordPitchDegree = scale.pitches.findIndex(p => equalPitch(p, prog.chord.root));
                     const dominantScale = new Scale(prog.chord.root, scaleType);
                     if (equalPitch(dominantScale.root, scale.root)) {
                         continue;
@@ -222,11 +224,11 @@ export const progressionChoices = (chord: Chord, scale: Scale, passedRecursionHa
                         continue;
                     }
                     // V chord
-                    addSecondaryDominants(dominantScale.diatonicChordsByDegree[4], 4, chordDegree, scale);
+                    addSecondaryDominants(dominantScale.diatonicChordsByDegree[4], dominantScale);
                     // ii chord
-                    addSecondaryDominants(dominantScale.diatonicChordsByDegree[1], 1, chordDegree, scale);
+                    addSecondaryDominants(dominantScale.diatonicChordsByDegree[1], dominantScale);
                     // vii chord
-                    addSecondaryDominants(dominantScale.diatonicChordsByDegree[6], 6, chordDegree, scale);
+                    addSecondaryDominants(dominantScale.diatonicChordsByDegree[6], dominantScale);
                 }
             }
         }

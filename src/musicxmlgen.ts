@@ -133,7 +133,7 @@ function addRichNoteToMeasure(richNote: RichNote, measure: builder.XMLElement, s
   let lyric = richNote.tension && staff == 0 ? { 'text': { '#text': `${richNote.tension}` } } : undefined
 
   if (richNote.scale && richNote.chord && staff == 1) {
-    const romanNumeral = richNote.chord.getChordDegree(richNote.scale.root);
+    const romanNumeral = richNote.chord.getChordDegree(richNote.scale);
     lyric = { 'text': { '#text': romanNumeral } }
   }
 

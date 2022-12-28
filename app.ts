@@ -15,6 +15,7 @@ import { allPitches, chordTemplates } from "./src/musictemplates";
 (window as any).chordTypes = Object.keys(chordTemplates);
 (window as any).Chord = Chord;
 (window as any).Note = Note;
+(window as any).Scale = Scale;
 
 (window as any).loadMelody = async (melody: Melody, chords: ChordChoicesByDivision, params: MainMusicParams) => {
     const divisionedNotes: DivisionedRichnotes = {};

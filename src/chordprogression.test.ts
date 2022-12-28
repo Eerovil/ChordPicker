@@ -119,6 +119,32 @@ describe('test other chord progressions', () => {
         // This is not a secondary dominant, and should not work
         const CminChord = new Chord('C', 'min');
         const choicesFromCminChord = progressionChoices(CminChord, CMajorScale)
-        expect(choicesFromCminChord.some(c => c.chord.toString() == "Ddim")).toBe(false)
+        const DdimProg = choicesFromCminChord.filter(c => c.chord.toString() == "Ddim");
+        if (DdimProg.length > 0) {
+            expect(DdimProg[0].reason).toBe("a good reason");
+        }
     })
+
+    test('Progress from Bdom7 to Cdom7', () => {
+        // This is not a secondary dominant, and should not work
+        // Apparently this is taking a tritone sub of Bbdom7, which is Fdom7
+
+        // const Bdom7Chord = new Chord('B', 'dom7');
+        // const choicesFromBdom7Chord = progressionChoices(Bdom7Chord, CMajorScale)
+        // const CDomProg = choicesFromBdom7Chord.filter(c => c.chord.toString() == "Cdom7");
+        // if (CDomProg.length > 0) {
+        //     expect(CDomProg[0].reason).toBe("a good reason");
+        // }
+    })
+
+    test('Progress from Amin to F#dimhalf7', () => {
+        //  Amin -> F#dimhalf7 works because it's iio7 / iii
+        // const AminChord = new Chord('A', 'min');
+        // const choicesFromAminChord = progressionChoices(AminChord, CMajorScale)
+        // const BadProg = choicesFromAminChord.filter(c => c.chord.toString() == "F#dimhalf7");
+        // if (BadProg.length > 0) {
+        //     expect(BadProg[0].reason).toBe("a good reason");
+        // }
+    })
+
 })

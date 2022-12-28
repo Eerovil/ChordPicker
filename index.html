@@ -413,14 +413,22 @@ createApp({
           this.params.problemWeights.self.melody = 1;
         }
         if (newValue.nextChord) {
-          this.params.problemWeights.next.chordProgression = 0;
+          for (const key in this.params.problemWeights.next) {
+            this.params.problemWeights.next[key] = 0;
+          }
         } else {
-          this.params.problemWeights.next.chordProgression = 1;
+          for (const key in this.params.problemWeights.next) {
+            this.params.problemWeights.next[key] = 1;
+          }
         }
         if (newValue.prevChord) {
-          this.params.problemWeights.prev.chordProgression = 0;
+          for (const key in this.params.problemWeights.prev) {
+            this.params.problemWeights.prev[key] = 0;
+          }
         } else {
-          this.params.problemWeights.prev.chordProgression = 1;
+          for (const key in this.params.problemWeights.prev) {
+            this.params.problemWeights.prev[key] = 1;
+          }
         }
         this.updateTotalScores();
       },

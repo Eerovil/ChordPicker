@@ -1,8 +1,8 @@
 import { chordChoiceToDivisionedNotes } from "./chordchoicetonotes";
 import { progressionChoices } from "./chordprogression";
-import { Chord, Note, Scale } from "./musicclasses";
+import { Chord, Note, Pitch, Scale } from "./musicclasses";
 import { MainMusicParams } from "./params";
-import { ChordChoice, RichNote, ChordProblem, DivisionedRichnotes, getRP, globalSemitone, relativePitchType, equalPitch, semitoneDistance, anyChromaticNotes, relativePitchName } from "./utils";
+import { ChordChoice, RichNote, ChordProblem, DivisionedRichnotes, getRP, globalSemitone, relativePitchType, equalPitch, semitoneDistance, anyChromaticNotes, relativePitchName, PitchPlusRP } from "./utils";
 
 
 type RulesParams = {
@@ -123,6 +123,127 @@ const doublingRules = (rulesParams: RulesParams) => {
         }
     }
 }
+
+
+const resolutionRules = (rulesParams: RulesParams) => {
+    const { problems, prevChord, prevNotes, nextChord, nextNotes, params } = rulesParams;
+
+    // 7th of a chord must resolve down.
+    const seventhOfChord = (chord: Chord, prevPitchesPerPart: Array<Array<Pitch>>, nextPitchesPerPart: Array<Array<Pitch>>, scale: Scale) => {
+        if (chord.notes.length == 4 && ['dom7'].includes(chord.chordType)) {
+            const possiblePrevPartsWithSeventh = prevPitchesPerPart.map(part => part.filter(pitch => equalPitch(pitch, chord.notes[3].pitch)).length > 0);
+            if (!possiblePrevPartsWithSeventh.some(b => b)) {
+                debugger;
+                // No parts have the seventh...?
+                return;
+            }
+            const possibleNextPartsWithSeventh = nextPitchesPerPart.map(part => part.filter(pitch => equalPitch(pitch, chord.notes[3].pitch)).length > 0);
+            const resolutionPitch = PitchPlusRP(chord.notes[0].pitch, {degree: 5, sharp: 0});
+            const possibleNextPartsWithResolution = nextPitchesPerPart.map(part => part.filter(pitch => equalPitch(pitch, resolutionPitch)).length > 0);
+
+            for (const prevPart of possiblePrevPartsWithSeventh) {
+                for (const nextPart of possibleNextPartsWithSeventh) {
+                    if (prevPart && nextPart) {
+                        return;  // This part could have the seventh and it could have it also next
+                    }
+                }
+                for (const nextPart of possibleNextPartsWithResolution) {
+                    if (prevPart && nextPart) {
+                        return;  // This part could have the seventh and it could have the resolution next
+                    }
+                }
+            }
+            // Seventh is not resolved or continued. That's bad.
+            problems.problems.resolution.push({
+                type: "resolution",
+                slug: "seventh",
+                comment: "Seventh of a dom7 should resolve down",
+                value: 10,
+            });
+        }
+    }
+
+
+    // leading tone must resolve up.
+    const leadingTone = (chord: Chord, prevPitchesPerPart: Array<Array<Pitch>>, nextPitchesPerPart: Array<Array<Pitch>>, scale: Scale) => {
+        const leadingTone = scale.leadingTone;
+        const possiblePrevPartsWithLeadingTone = prevPitchesPerPart.map(part => part.filter(pitch => equalPitch(pitch, leadingTone)).length > 0);
+        if (!possiblePrevPartsWithLeadingTone.some(b => b)) {
+            return;  // No parts with leading tone
+        }
+        const resolutionPitch = scale.root;
+        const possibleNextPartsWithLeadingTone = nextPitchesPerPart.map(part => part.filter(pitch => equalPitch(pitch, leadingTone)).length > 0);
+        const possibleNextPartsWithResolution = nextPitchesPerPart.map(part => part.filter(pitch => equalPitch(pitch, resolutionPitch)).length > 0);
+
+        for (const prevPart of possiblePrevPartsWithLeadingTone) {
+            for (const nextPart of possibleNextPartsWithLeadingTone) {
+                if (prevPart && nextPart) {
+                    return;  // This part could have the leading tone and it could have it also next
+                }
+            }
+            for (const nextPart of possibleNextPartsWithResolution) {
+                if (prevPart && nextPart) {
+                    return;  // This part could have the leading tone and it could have the resolution next
+                }
+            }
+        }
+        // Leading tone is not resolved or continued. That's bad.
+        problems.problems.resolution.push({
+            type: "resolution",
+            slug: "leading-tone",
+            comment: "Leading tone should resolve up",
+            value: 10,
+        });
+    }
+
+    const possiblePitchesPerPart = (chord: Chord, doubling: Array<number>, inversion: number): Array<Array<Pitch>> => {
+        // Inversion tells us the bass note.
+        const bassPitch = chord.notes[inversion].pitch;
+        // Doubling tells us the rest.
+        // For each part, every note is possible unless it's in the bass and NOT doubled.
+        // OR
+        // If it's left out completely.
+
+        let doubledIndexes = doubling.filter(i => doubling.filter(j => j == i).length > 1);
+
+        const possiblePitches: Array<Array<Pitch>> = [[], [], []];
+
+        const handledIndexes: Set<Pitch> = new Set();
+
+        for (const noteIndex of doubling) {
+            if (noteIndex == inversion) {
+                if (!(doubledIndexes.includes(noteIndex))) {
+                    continue;  // Can't include this index, it's not doubled and it's in the bass.
+                }
+            }
+            if (handledIndexes.has(chord.notes[noteIndex].pitch)) {
+                continue;
+            }
+
+            // Add all notes for all non-bass parts.
+            possiblePitches[0].push(chord.notes[noteIndex].pitch);
+            possiblePitches[1].push(chord.notes[noteIndex].pitch);
+            possiblePitches[2].push(chord.notes[noteIndex].pitch);
+        }
+
+        possiblePitches[3] = [bassPitch];  // No choices for bass.
+
+        return possiblePitches;
+    }
+
+    if (prevChord && prevChord.chord && prevNotes && prevNotes.length > 0) {
+        if (nextChord && nextChord.chord && nextNotes && nextNotes.length > 0) {
+            const nextScale = nextNotes[0].scale;
+            const prevPitchesPerPart = possiblePitchesPerPart(prevChord.chord, prevChord.doubling, prevChord.inversion);
+            const nextPitchesPerPart = possiblePitchesPerPart(nextChord.chord, nextChord.doubling, nextChord.inversion);
+
+            leadingTone(prevChord.chord, prevPitchesPerPart, nextPitchesPerPart, prevNotes[0].scale);
+            seventhOfChord(prevChord.chord, prevPitchesPerPart, nextPitchesPerPart, prevNotes[0].scale);
+        }
+    }
+
+}
+
 
 const chordProgressionRules = (rulesParams: RulesParams) => {
     const { problems, prevChord, prevNotes, nextChord, nextNotes, params } = rulesParams;
@@ -280,6 +401,15 @@ export const getProblemsBetweenChords = (prevChord: ChordChoice, nextChord: Chor
     });
 
     chordProgressionRules({
+        prevChord,
+        nextChord,
+        prevNotes,
+        nextNotes,
+        problems: ret,
+        params,
+    })
+
+    resolutionRules({
         prevChord,
         nextChord,
         prevNotes,

@@ -16,6 +16,7 @@ export class MainMusicParams {
             'overlapping': 1,
             'doubling': 1,
             'chromaticism': 1,
+            'resolution': 1,
         },
         next:
         {
@@ -27,6 +28,7 @@ export class MainMusicParams {
             'overlapping': 1,
             'doubling': 1,
             'chromaticism': 1,
+            'resolution': 1,
         },
         prev:
         {
@@ -38,6 +40,7 @@ export class MainMusicParams {
             'overlapping': 1,
             'doubling': 1,
             'chromaticism': 1,
+            'resolution': 1,
         },
     }
 

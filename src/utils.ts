@@ -122,7 +122,7 @@ export type MelodyNote = {
 };
 export type Melody = Array<MelodyNote>;
 
-export type ChordProblemType = "voiceDistance" | "badInterval" | "chordProgression" | "dissonance" | "melody" | "overlapping" | "doubling" | "chromaticism";
+export type ChordProblemType = "voiceDistance" | "badInterval" | "chordProgression" | "dissonance" | "melody" | "overlapping" | "doubling" | "chromaticism" | "resolution";
 
 export type ChordProblemValue = {
     type: ChordProblemType,
@@ -142,6 +142,7 @@ export class ChordProblem {
         overlapping: [],
         doubling: [],
         chromaticism: [],
+        resolution: [],
     }
     notes: Array<Note> = [];
     public getScore(slug: ChordProblemType) {

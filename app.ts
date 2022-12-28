@@ -9,6 +9,7 @@ import { getChordProblem, getProblemsBetweenChords } from "./src/problems";
 import { ChordChoice, ChordChoicesByDivision, chordChoiceTotalScore, DivisionedRichnotes, Melody } from "./src/utils"
 import { Chord, Note, Scale } from "./src/musicclasses";
 import { allPitches, chordTemplates } from "./src/musictemplates";
+import { parseLilyPondString } from "./src/lilypond";
 
 (window as any).MainMusicParams = MainMusicParams;
 (window as any).CMAJ = new Scale(allPitches[0], 'major');
@@ -18,9 +19,9 @@ import { allPitches, chordTemplates } from "./src/musictemplates";
 (window as any).Scale = Scale;
 (window as any).chordChoiceTotalScore = chordChoiceTotalScore;
 
-(window as any).loadMelody = async (melody: Melody, chords: ChordChoicesByDivision, params: MainMusicParams) => {
+(window as any).loadMelody = async (lilyPondString: string, chords: ChordChoicesByDivision, params: MainMusicParams) => {
     const divisionedNotes: DivisionedRichnotes = {};
-    melodyToRichNotes(melody, divisionedNotes, params);
+    parseLilyPondString(lilyPondString, divisionedNotes);
     for (const division in chords) {
         chordChoiceToDivisionedNotes(chords[division], parseInt(division), divisionedNotes, params);
     }
@@ -30,9 +31,9 @@ import { allPitches, chordTemplates } from "./src/musictemplates";
     await renderMusic(scoreXml);
 }
 
-(window as any).getChordChoices = async (melody: Melody, division: number, prevChord: ChordChoice, nextChord: ChordChoice, params: MainMusicParams) => {
+(window as any).getChordChoices = async (lilyPondString: string, division: number, prevChord: ChordChoice, nextChord: ChordChoice, params: MainMusicParams) => {
     const divisionedNotes: DivisionedRichnotes = {};
-    melodyToRichNotes(melody, divisionedNotes, params);
+    parseLilyPondString(lilyPondString, divisionedNotes);
     const chordGenerator = new ChordGenerator(params);
     const ret = [];
     for (const chord of chordGenerator.getChord()) {

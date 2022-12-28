@@ -51,20 +51,6 @@
 <body>
     <div id="vue-template" class="d-flex" style="flex-direction: column;">
       <input type="text" v-model="melodyText"></input>
-      <div id="melodys">
-        <div v-for="note in melody">
-          <p>{{ note.note }}<span v-if="note.sharp == -1">b</span><span v-if="note.sharp == 1">#</span></p>
-          <input type="number" min="-1" max="1" v-model="note.sharp"></input>
-          <select v-model="note.duration">
-            <option value="w">Whole</option>
-            <option value="h">Half</option>
-            <option value="q">Quarter</option>
-            <option value="e">Eighth</option>
-            <option value="s">Sixteenth</option>
-          </select>
-          <input type="checkbox" v-model="note.dotted"></input>
-        </div>
-      </div>
       <div id="score">
 
       </div>
@@ -165,7 +151,6 @@ createApp({
   data() {
     return {
       melodyText: "",
-      melody: [],
       params: {},
       chords: {},
       editingChord: -1,
@@ -197,7 +182,6 @@ createApp({
       this.chords[key].notes = (this.chords[key].notes || []).map(note => window.Note.fromObject(note));
     }
     console.log(this.chords);
-    this.melody = JSON.parse(window.localStorage.getItem('melody') || "[]") || [];
     this.melodyText = window.localStorage.getItem('melodyText') || "";
   },
   computed: {
@@ -205,7 +189,7 @@ createApp({
       return ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
     },
     maxDivision() {
-      return this.melody.length * 12 + 24 * 12;
+      return this.melodyText.length * 12 + 24 * 12;
     },
     chordSlots() {
       ret = [];
@@ -293,12 +277,10 @@ createApp({
     },
     saveSong() {
       window.localStorage.setItem('chords', JSON.stringify(this.chords));
-      window.localStorage.setItem('melody', JSON.stringify(this.melody));
       window.localStorage.setItem('melodyText', this.melodyText);
     },
     clearSong() {
       this.chords = {};
-      this.melody = [];
       this.melodyText = "";
       this.saveSong();
       window.location.reload();
@@ -321,7 +303,7 @@ createApp({
       }
     },
     refreshXML() {
-      window.loadMelody(this.melody, this.chords, this.params)
+      window.loadMelody(this.melodyText, this.chords, this.params)
     },
     addChordToIndex(index) {
       this.chords[index] = this.initChord(index);
@@ -341,7 +323,7 @@ createApp({
         tmpIndex++;
       }
       this.editingChord = index;
-      this.chordChoices = await window.getChordChoices(this.melody, index, prevChord, nextChord, this.params);
+      this.chordChoices = await window.getChordChoices(this.melodyText, index, prevChord, nextChord, this.params);
       if (this.chords[index]) {
         this.selectedChord = this.chords[index];
       }
@@ -373,31 +355,8 @@ createApp({
         this.selectedChord = this.chordInversionsAndDoublings[this.selectedChordRoot][0];
       }
     },
-    melodyText(newValue) {
-      const newNotes = newValue.split("")
-      if (this.melody.length < newNotes.length) {
-        // Maybe new note is inserted in between
-        for (let i = 0; i < newNotes.length; i++) {
-          if (!this.melody[i] || this.melody[i].note != newNotes[i]) {
-            this.melody.splice(i, 0, this.initMelodyNote(newNotes[i]))
-          }
-        }
-      }
-      else if (this.melody.length > newNotes.length) {
-        // Maybe a note is deleted from the middle
-        for (let i = 0; i < newNotes.length; i++) {
-          if (this.melody[i].note != newNotes[i]) {
-            this.melody.splice(i, 1)
-          }
-        }
-      }
-      // Check that noteName matches for each note
-      for (let i = 0; i < newNotes.length; i++) {
-        if (this.melody[i].note != newNotes[i]) {
-          this.melody[i].note = newNotes[i]
-          this.melody[i].sharp = 0
-        }
-      }
+    melodyText() {
+      this.refreshXML();
     },
     melody: {
       handler() {

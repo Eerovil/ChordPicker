@@ -95,6 +95,22 @@ const diatonicProgressionChoices = (chord: Chord, scale: Scale): Array<Chord> =>
     return ret;
 }
 
+const diatonicReverseProgressionChoices = (chord: Chord, scale: Scale): Array<Chord> => {
+    // Return progressions if we're going backwards.
+    // This answers the question: "What chord can come before this one?"
+    const ret: Array<Chord> = [];
+    for (const degree in scale.diatonicChordsByDegree) {
+        // Since diatonic progression works with degrees, we need only to check one chord per degree.
+        const progressions = diatonicProgressionChoices(scale.diatonicTriads[degree], scale);
+        if (progressions.find(c => c.toString() == chord.toString())) {
+            for (const retChord of scale.diatonicChordsByDegree[degree]) {
+                ret.push(retChord);
+            }
+        }
+    }
+    return ret;
+}
+
 export const progressionChoices = (chord: Chord, scale: Scale, passedRecursionHandled: Set<string> | undefined = undefined, originalScale: Scale | undefined = undefined) : Array<ChordProgression> => {
     let recursionHandled = passedRecursionHandled || new Set();
 
@@ -120,6 +136,7 @@ export const progressionChoices = (chord: Chord, scale: Scale, passedRecursionHa
     if (!anyChromaticNotes(chord.notes, scale)) {
         // We're good, this cannot be a substitution or a secondary chord.
         initialResults = diatonicProgressionChoices(chord, scale).map(chord => ({chord, score: 0, reason: 'diatonic in ' + scale.toString() }));
+        initialResults = initialResults.concat(diatonicReverseProgressionChoices(chord, scale).map(chord => ({chord, score: 4, reason: 'reverse diatonic in ' + scale.toString() })));
     } else {
         // Run this same function for all chords this chord could be substituting.
         const substitutions = chordSubstitutions(chord, scale);
@@ -213,7 +230,7 @@ export const progressionChoices = (chord: Chord, scale: Scale, passedRecursionHa
 
     if (!originalScale || originalScale.equals(scale)) {
         for (const prog of ret) {
-            if (['maj', 'min'].includes(prog.chord.chordType)) {
+            if (['maj', 'min'].includes(prog.chord.chordType) && scale.pitches.some(p => equalPitch(p, prog.chord.root))) {
                 // Make a scale that has this chord as the root/tonic
                 for (const scaleType of ['major', 'harmonicMinor']) {
                     const chordPitchDegree = scale.pitches.findIndex(p => equalPitch(p, prog.chord.root));

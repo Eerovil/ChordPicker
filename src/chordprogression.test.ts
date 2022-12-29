@@ -89,9 +89,9 @@ describe('test other chord progressions', () => {
         const VChord = diatonicChords[4];
         const choicesFromV = progressionChoices(VChord, CMajorScale).map(prog => prog.chord.toString());
         expect(choicesFromV.some(c => c == "Cmaj")).toBe(true)
-        expect(choicesFromV.some(c => c == "Dmin")).toBe(false)
+        expect(choicesFromV.some(c => c == "Dmin")).toBe(true)  // Reverse progression
         expect(choicesFromV.some(c => c == "Emin")).toBe(false)
-        expect(choicesFromV.some(c => c == "Fmaj")).toBe(false)
+        expect(choicesFromV.some(c => c == "Fmaj")).toBe(true)  // Reverse progression
         expect(choicesFromV.some(c => c == "Gmaj")).toBe(true)
         expect(choicesFromV.some(c => c == "Gdom7")).toBe(true)
         expect(choicesFromV.some(c => c == "Amin")).toBe(true)
@@ -101,12 +101,12 @@ describe('test other chord progressions', () => {
     test('Progress from ii chord', () => {
         const iiChord = diatonicChords[1];
         const choicesFromii = progressionChoices(iiChord, CMajorScale).map(prog => prog.chord.toString());
-        expect(choicesFromii.some(c => c == "Cmaj")).toBe(false)
+        expect(choicesFromii.some(c => c == "Cmaj")).toBe(true)  // Reverse progression
         expect(choicesFromii.some(c => c == "Dmin")).toBe(true)
         expect(choicesFromii.some(c => c == "Emin")).toBe(false)
-        expect(choicesFromii.some(c => c == "Fmaj")).toBe(false)
+        expect(choicesFromii.some(c => c == "Fmaj")).toBe(true)  // Reverse progression
         expect(choicesFromii.some(c => c == "Gmaj")).toBe(true)
-        expect(choicesFromii.some(c => c == "Amin")).toBe(false)
+        expect(choicesFromii.some(c => c == "Amin")).toBe(true)  // Reverse progression
         expect(choicesFromii.some(c => c == "Bdim")).toBe(true)
     })
 
@@ -142,6 +142,12 @@ describe('test other chord progressions', () => {
         expect(choicesFromEdimChord.some(c => c == "Cmaj")).toBe(true)
     })
 
+    test('Reverse diatonic progression', () => {
+        const choices = progressionChoices(Chord.create(allPitchesByName['A'], 'min'), CMajorScale);
+        const progressions = choices.filter(c => c.chord.toString() == "Gmaj");
+        expect(progressions[0].reason).toBe("reverse diatonic in C major");
+    });
+
     test('Progress from Cmin to Ddim', () => {
         // This is not a secondary dominant, and should not work
         const CminChord = Chord.create('C', 'min');
@@ -158,12 +164,12 @@ describe('test other chord progressions', () => {
         let choices = progressionChoices(CminChord, new Scale(allPitchesByName['F'], 'major'))
         let BadProg = choices.filter(c => c.chord.toString() == "Gmin");
         if (BadProg.length > 0) {
-            expect(BadProg[0].reason).toBe("a good reason");
+            expect(BadProg[0].reason).toContain("reverse diatonic in F major");
         }
         choices = progressionChoices(Chord.create('C', 'maj'), new Scale(allPitchesByName['F'], 'major'))
         BadProg = choices.filter(c => c.chord.toString() == "Gmin");
         if (BadProg.length > 0) {
-            expect(BadProg[0].reason).toBe("a good reason");
+            expect(BadProg[0].reason).toContain("reverse diatonic in F major");
         }
     })
 

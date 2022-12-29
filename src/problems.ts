@@ -269,12 +269,24 @@ const chordProgressionRules = (rulesParams: RulesParams) => {
             value: 10,
         });
     } else {
+        let bestProg = null;
         for (const prog of availableProgressions.filter(p => p.chord.toString() == nextChordString)) {
+            if (!bestProg) {
+                bestProg = prog;
+            }
+            if (prog.score < bestProg.score) {
+                bestProg = prog;
+            }
+            if (prog.score == bestProg.score && prog.reason.length < bestProg.reason.length) {
+                bestProg = prog;
+            }
+        }
+        if (bestProg) {
             problems.problems.chordProgression.push({
                 type: "chordProgression",
                 slug: "available",
-                comment: `Chord ${prevChord.chord.toString()} -> ${prog.chord.toString()} (${prog.reason})`,
-                value: 0,
+                comment: `Chord ${prevChord.chord.toString()} -> ${bestProg.chord.toString()} (${bestProg.reason})`,
+                value: bestProg.score,
             });
         }
     }
@@ -301,10 +313,14 @@ export const getProblemsBetweenChords = (prevChord: ChordChoice, nextChord: Chor
 
     // How did it go?
     const prevRichNotes = fakeDivisionedNotes[prevChord.division];
+    const nextRichNotes = fakeDivisionedNotes[nextChord.division];
     if (prevChord.selectedScale) {
         prevRichNotes.forEach(rn => rn.scale = (prevChord.selectedScale as Scale));
+        nextRichNotes.forEach(rn => rn.scale = (prevChord.selectedScale as Scale));
     }
-    const nextRichNotes = fakeDivisionedNotes[nextChord.division];
+    if (nextChord.selectedScale) {
+        nextRichNotes.forEach(rn => rn.scale = (nextChord.selectedScale as Scale));
+    }
 
     const prevNotes = [
         prevRichNotes.filter(rn => rn.partIndex == 0)[0],

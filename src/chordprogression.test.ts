@@ -155,8 +155,13 @@ describe('test other chord progressions', () => {
     test('Progress from Edmin to Gmin', () => {
         // This is not a secondary dominant, and should not work
         const CminChord = Chord.create('E', 'dim');
-        const choices = progressionChoices(CminChord, CMajorScale)
-        const BadProg = choices.filter(c => c.chord.toString() == "Gmin");
+        let choices = progressionChoices(CminChord, new Scale(allPitchesByName['F'], 'major'))
+        let BadProg = choices.filter(c => c.chord.toString() == "Gmin");
+        if (BadProg.length > 0) {
+            expect(BadProg[0].reason).toBe("a good reason");
+        }
+        choices = progressionChoices(Chord.create('C', 'maj'), new Scale(allPitchesByName['F'], 'major'))
+        BadProg = choices.filter(c => c.chord.toString() == "Gmin");
         if (BadProg.length > 0) {
             expect(BadProg[0].reason).toBe("a good reason");
         }

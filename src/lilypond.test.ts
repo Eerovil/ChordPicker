@@ -26,6 +26,7 @@ describe('lilypond test', () => {
         expect(pitchString(divisionedNotes[33][0].note.pitch)).toBe('F')
     });
     test('a8 g a bf4. a8 g a f8. g16 g8 a4', () => {
+        // a4 g a bes4 bes2 a4 g a f4. g8 g4 a2
         const divisionedNotes = parseLilyPondString("a8 g a bes4. a8 g a f8. g16 g8 a4");
         const m = 12 * 4;
         let div = 0;

@@ -124,6 +124,7 @@
                 </div>
               </div>
               <button @click="deleteChord()">DELETE</button>
+              <button @click="editingChord = -1">CANCEL</button>
               <button @click="saveChord()">OK</button>
             </div>
             <div v-else class="chord">
@@ -343,8 +344,14 @@ createApp({
       }
       if (!prevScale) {
         prevScale = getScale('C', 'major');
+      } else {
+        prevScale = getScale(prevScale.root, prevScale.templateSlug);
+      }
+      if (prevScale) {
+        prevChord.selectedScale = prevScale;
       }
       this.editingChord = index;
+      console.log("prevChord", prevChord)
       this.chordChoices = await window.getChordChoices(this.melodyText, index, prevChord, nextChord, this.params);
       if (this.chords[index]) {
         this.selectedChord = this.chords[index];

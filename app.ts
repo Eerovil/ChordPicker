@@ -56,6 +56,9 @@ import { parseLilyPondString } from "./src/lilypond";
             let prevProblem;
             let nextProblem;
             if (prevChord) {
+                if (!prevChord.selectedScale) {
+                    throw new Error('prevChord.selectedScale is not set');
+                }
                 prevProblem = getProblemsBetweenChords(prevChord, inversionAndDoubling, divisionedNotes, params);
             }
             if (nextChord) {

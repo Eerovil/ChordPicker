@@ -273,7 +273,7 @@ export class Chord {
         return getChord(passedPitch, chordType)
     }
     static fromObject(obj: any) {
-        return getChord(obj.root, obj.chordType);
+        return getChord(obj._root, obj._chordType);
     }
     public getDegreePitch(scale: Scale): Pitch {
         let degree = 0;

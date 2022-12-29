@@ -54,6 +54,9 @@
       <div id="score">
 
       </div>
+      <div id="score-hidden" style="display: none;">
+
+      </div>
       <div id="chords">
         <div v-for="chordSlot in chordSlots" class="d-flex">
           <div v-if="chords[chordSlot]" class="d-flex">
@@ -322,20 +325,35 @@ createApp({
       this.chords[index] = this.initChord(index);
       this.startEditingChord(index);
     },
-    async startEditingChord(index) {
+    getPrevChord(index, options = undefined) {
       let tmpIndex = index - 1;
       let prevChord = this.chords[tmpIndex];
       while (!prevChord && tmpIndex >= 0) {
         prevChord = this.chords[tmpIndex];
         tmpIndex--;
       }
-      tmpIndex = index + 1;
+      if (options && options.indexOnly) {
+        return tmpIndex;
+      }
+      return prevChord;
+    },
+    getNextChord(index, options = undefined) {
+      let tmpIndex = index + 1;
       let nextChord = this.chords[tmpIndex];
       while (!nextChord && tmpIndex <= this.chordSlots[this.chordSlots.length - 1]) {
         nextChord = this.chords[tmpIndex];
         tmpIndex++;
       }
+      if (options && options.indexOnly) {
+        return tmpIndex;
+      }
+      return nextChord;
+    },
+    async startEditingChord(index) {
+      let prevChord = this.getPrevChord(index);
+      let nextChord = this.getNextChord(index);
       let prevScale = null;
+      let tmpIndex = index - 1;
       while (!prevScale && tmpIndex >= 0) {
         if (this.chords[tmpIndex]) {
           prevScale = this.chords[tmpIndex].selectedScale;
@@ -347,7 +365,7 @@ createApp({
       } else {
         prevScale = getScale(prevScale.root, prevScale.templateSlug);
       }
-      if (prevScale) {
+      if (prevChord && prevScale) {
         prevChord.selectedScale = prevScale;
       }
       this.editingChord = index;
@@ -375,8 +393,30 @@ createApp({
       this.editingChord = -1;
       this.refreshXML();
     },
+    playClosestChords() {
+      const selectedIndex = this.editingChord;
+      const prevChordIndex = this.getPrevChord(selectedIndex, {indexOnly: true}) - 12;
+      const nextChordIndex = this.getNextChord(selectedIndex, {indexOnly: true}) + 12;
+      const tmpChords = [];
+      for (const division in this.chords) {
+        if (division == selectedIndex) {
+          tmpChords[division] = this.selectedChord;
+          continue;
+        }
+        tmpChords[division] = this.chords[division];
+      }
+      window.playPartial(this.melodyText, tmpChords, this.params, prevChordIndex, nextChordIndex);
+    },
+    playLastMelodyNote() {
+      const melodys = this.melodyText.split(' ').filter(Boolean);
+      const lastMelody = melodys[melodys.length - 1];
+      window.playPartial(lastMelody, {}, this.params, 0, 0);
+    },
   },
   watch: {
+    selectedChord() {
+      this.playClosestChords();
+    },
     chordChoices() {
       if (!this.selectedChord) {
         this.selectedChord = this.chordChoices[0];
@@ -387,7 +427,10 @@ createApp({
         this.selectedChord = this.chordInversionsAndDoublings[this.selectedChordRoot][0];
       }
     },
-    melodyText() {
+    melodyText(newValue, oldValue) {
+      if (newValue.split(' ').filter(Boolean).length > oldValue.split(' ').filter(Boolean).length) {
+        this.playLastMelodyNote();
+      }
       this.refreshXML();
     },
     melody: {

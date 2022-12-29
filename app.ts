@@ -79,3 +79,23 @@ import { parseLilyPondString } from "./src/lilypond";
     }
     return ret;
 }
+
+(window as any).playPartial = async (lilyPondString: string, chords: ChordChoicesByDivision, params: MainMusicParams, fromDivision: number, toDivision: number) => {
+    const divisionedNotes: DivisionedRichnotes = {};
+    parseLilyPondString(lilyPondString, divisionedNotes);
+    for (const division in chords) {
+        if (parseInt(division) < fromDivision || parseInt(division) > toDivision) {
+            continue;
+        }
+        chordChoiceToDivisionedNotes(chords[division], parseInt(division), divisionedNotes, params);
+    }
+    for (const division of Object.keys(divisionedNotes)) {
+        if (parseInt(division) < fromDivision || parseInt(division) > toDivision) {
+            delete divisionedNotes[parseInt(division)];
+        }
+    }
+    console.log(divisionedNotes);
+    cleanDivisionedNotes(divisionedNotes, params);
+    const scoreXml = toXml(divisionedNotes, params);
+    await loadPlayer(scoreXml, true);
+}

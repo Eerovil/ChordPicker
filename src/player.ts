@@ -45,17 +45,27 @@ const loadPlayer = async (scoreXml: string, autoplay: boolean) => {
   if (!document) {
     return;
   }
-  let el = document.getElementById("score");
+  let el = document.getElementById("score-hidden");
   if (!el) {
     return;
   }
   el.innerHTML = "";
-  const osmd = (window as any).renderOSMD
+
+  if (!(window as any).playbackOSMD) {
+    (window as any).playbackOSMD = new OpenSheetMusicDisplay(el);
+    (window as any).playbackOSMD.setOptions({
+        backend: "svg",
+        drawingParameters: "compacttight"
+    })
+  }
+
+  const osmd = (window as any).playbackOSMD
   if (!(window as any).audioPlayer) {
     (window as any).audioPlayer = new AudioPlayer();
   }
   const audioPlayer = (window as any).audioPlayer;
   audioPlayer.playbackSettings.masterVolume = 40;
+  audioPlayer.stop();
 
   await osmd.load(scoreXml);
   await osmd.render();

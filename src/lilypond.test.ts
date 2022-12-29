@@ -43,3 +43,6 @@ describe('lilypond test', () => {
         expect(pitchString(divisionedNotes[div][0].note.pitch)).toBe('A'); div += m/4;
     });
 });
+
+
+// c'8. d'16 e'4 c'4 a8. b16 c'4 a g8. g16 a4 b c'8. b16 a4 g c'8. d'16 e'4 c'4 a8. b16 c'4 a f'8. e'16 d'8. c'16 b8. g16 c'4 c'4
